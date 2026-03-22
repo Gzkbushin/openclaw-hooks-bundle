@@ -93,6 +93,49 @@ test("redactSensitiveData masks nested structured values", () => {
   });
 });
 
+test("redactSensitiveText preserves non-secret numbers and redacts jwt and aws keys", () => {
+  const input = [
+    "short=123-4567",
+    "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature",
+    "aws=AKIA1234567890ABCDEF",
+  ].join(" | ");
+
+  const redacted = redactSensitiveText(input);
+
+  assert.match(redacted, /123-4567/);
+  assert.equal(redacted.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature"), false);
+  assert.equal(redacted.includes("AKIA1234567890ABCDEF"), false);
+  assert.match(redacted, /\[REDACTED:token]/);
+  assert.match(redacted, /\[REDACTED:api_key]/);
+});
+
+test("redactSensitiveData preserves primitives and handles arrays and circular references", () => {
+  assert.equal(redactSensitiveData(null), null);
+  assert.equal(redactSensitiveData(42), 42);
+
+  const input: Record<string, unknown> = {
+    accessToken: "ghp_abcdefghijklmnopqrstuvwxyz123456",
+    nested: [
+      "call me at +1 (415) 555-2671",
+      {
+        secretKey: "AKIA1234567890ABCDEF",
+      },
+    ],
+  };
+  input.self = input;
+
+  const redacted = redactSensitiveData(input) as Record<string, unknown> & { self?: unknown };
+
+  assert.equal(redacted.accessToken, "[REDACTED:token]");
+  assert.deepEqual(redacted.nested, [
+    "call me at [REDACTED:phone]",
+    {
+      secretKey: "[REDACTED:api_key]",
+    },
+  ]);
+  assert.equal(redacted.self, redacted);
+});
+
 test("context-mode snapshots and resume payloads are redacted", () => {
   const root = mkdtempSync(join(tmpdir(), "context-mode-privacy-"));
   const { handlers, restore } = registerPlugin(root);

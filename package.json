@@ -7,8 +7,9 @@
     "install": "./install.sh",
     "uninstall": "./UNINSTALL.sh",
     "test": "npm --prefix plugins/openclaw-quality-hooks test && npm --prefix plugins/context-mode test",
+    "coverage": "node --experimental-strip-types --experimental-test-coverage --test --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test-coverage-include='plugins/**/*.ts' --test-coverage-exclude='**/test/**' plugins/openclaw-quality-hooks/test/*.test.ts plugins/context-mode/test/*.test.ts && npm --prefix plugins/context-mode run smoke",
     "lint": "npm --prefix plugins/openclaw-quality-hooks run lint && npm --prefix plugins/context-mode run lint",
-    "check": "npm test && npm run lint"
+    "check": "npm run coverage && npm run lint"
   },
   "keywords": [
     "openclaw",

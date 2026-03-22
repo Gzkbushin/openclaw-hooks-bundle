@@ -24,6 +24,7 @@ function registerPlugin(config: Record<string, unknown>) {
   const handlers = new Map<string, RegisteredHandler>();
   const debugEntries: unknown[][] = [];
   const infoEntries: unknown[][] = [];
+  const errorEntries: unknown[][] = [];
   const globals = globalThis as typeof globalThis & {
     OPENCLAW_PLUGIN_CONFIG?: Record<string, unknown>;
   };
@@ -35,7 +36,7 @@ function registerPlugin(config: Record<string, unknown>) {
     logger: {
       info: (...args: unknown[]) => infoEntries.push(args),
       warn: () => {},
-      error: () => {},
+      error: (...args: unknown[]) => errorEntries.push(args),
       debug: (...args: unknown[]) => debugEntries.push(args),
     },
     on(event, handler) {
@@ -47,6 +48,7 @@ function registerPlugin(config: Record<string, unknown>) {
     handlers,
     debugEntries,
     infoEntries,
+    errorEntries,
     restore() {
       if (previousConfig === undefined) {
         delete globals.OPENCLAW_PLUGIN_CONFIG;
@@ -59,6 +61,10 @@ function registerPlugin(config: Record<string, unknown>) {
 
 function openDb(root: string) {
   return new BetterSqlite3(join(root, "context-mode-openclaw.db"));
+}
+
+function makeLongText(prefix: string, words = 24) {
+  return Array.from({ length: words }, (_value, index) => `${prefix}-${index.toString().padStart(2, "0")}`).join(" ");
 }
 
 test("context-mode enforces FIFO cleanup for memory snapshots and logs resource stats", { concurrency: false }, () => {
@@ -363,6 +369,209 @@ test("context-mode normalizes namespaced tool names and classifies common runtim
     ]);
   } finally {
     restore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("context-mode falls back invalid resource limits and summarizes unknown tools", { concurrency: false }, () => {
+  const root = mkdtempSync(join(tmpdir(), "context-mode-summary-"));
+  const { handlers, debugEntries, restore } = registerPlugin({
+    dbPath: root,
+    maxContextSnapshots: 0,
+    maxMemorySnapshots: "invalid",
+    snapshotRetentionDays: -1,
+  });
+
+  try {
+    const afterToolCall = handlers.get("after_tool_call");
+    assert.ok(afterToolCall);
+
+    afterToolCall?.({
+      sessionId: "summary-session",
+      toolName: "custom.search-helper",
+      params: {
+        queries: [
+          makeLongText("query-alpha"),
+          makeLongText("query-beta"),
+          makeLongText("query-gamma"),
+          makeLongText("query-delta"),
+        ],
+      },
+      result: "ok",
+    });
+
+    afterToolCall?.({
+      sessionId: "summary-session",
+      toolName: "custom.error-helper",
+      params: {
+        query: makeLongText("error-query"),
+      },
+      result: `permission denied ${makeLongText("result-token", 40)}`,
+    });
+
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    afterToolCall?.({
+      sessionId: "summary-session",
+      toolName: "custom.unknown-tool",
+      params: {
+        foo: "one",
+        bar: "two",
+      },
+      result: circular,
+    });
+
+    afterToolCall?.({
+      sessionId: "summary-session",
+      toolName: "ctx_custom",
+      params: {
+        path: "/tmp/ctx-custom.txt",
+      },
+      result: "ok",
+    });
+
+    const db = openDb(root);
+    const rows = db
+      .prepare("SELECT tool_name, priority, summary, detail FROM session_events ORDER BY id ASC")
+      .all() as Array<{ tool_name: string; priority: number; summary: string; detail: string }>;
+    db.close();
+
+    assert.deepEqual(
+      rows.map(row => ({ tool_name: row.tool_name, priority: row.priority })),
+      [
+        { tool_name: "search-helper", priority: 3 },
+        { tool_name: "error-helper", priority: 1 },
+        { tool_name: "unknown-tool", priority: 4 },
+        { tool_name: "ctx_custom", priority: 2 },
+      ],
+    );
+    const searchRow = rows.find(row => row.tool_name === "search-helper");
+    const errorRow = rows.find(row => row.tool_name === "error-helper");
+    const unknownRow = rows.find(row => row.tool_name === "unknown-tool");
+    assert.match(searchRow?.summary ?? "", /queries=/);
+    assert.equal((searchRow?.summary ?? "").includes("query-delta"), false);
+    assert.match(errorRow?.summary ?? "", /result=permission denied/);
+    assert.match(unknownRow?.summary ?? "", /keys=foo,bar/);
+    assert.match(unknownRow?.detail ?? "", /\[object Object]/);
+    assert.equal(
+      debugEntries.some(
+        entry =>
+          entry[1] === "resource stats" &&
+          (entry[2] as { reason?: string; limits?: Record<string, number> })?.reason === "startup" &&
+          (entry[2] as { limits?: Record<string, number> })?.limits?.maxContextSnapshots === 50 &&
+          (entry[2] as { limits?: Record<string, number> })?.limits?.maxMemorySnapshots === 100 &&
+          (entry[2] as { limits?: Record<string, number> })?.limits?.snapshotRetentionDays === 7,
+      ),
+      true,
+    );
+  } finally {
+    restore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("context-mode compaction trims oversized snapshots while preserving higher-priority context", { concurrency: false }, () => {
+  const root = mkdtempSync(join(tmpdir(), "context-mode-compaction-"));
+  const { handlers, restore } = registerPlugin({
+    dbPath: root,
+  });
+
+  try {
+    const afterToolCall = handlers.get("after_tool_call");
+    const beforeCompaction = handlers.get("before_compaction");
+    assert.ok(afterToolCall);
+    assert.ok(beforeCompaction);
+
+    for (let index = 0; index < 8; index += 1) {
+      afterToolCall?.({
+        sessionId: "snapshot-session",
+        toolName: `custom.error-${index}`,
+        params: { query: makeLongText(`critical-${index}`) },
+        result: `error ${makeLongText(`critical-result-${index}`, 48)}`,
+      });
+    }
+
+    for (let index = 0; index < 8; index += 1) {
+      afterToolCall?.({
+        sessionId: "snapshot-session",
+        toolName: "exec_command",
+        params: { cmd: `run ${makeLongText(`exec-${index}`, 28)}` },
+        result: "ok",
+      });
+    }
+
+    for (let index = 0; index < 6; index += 1) {
+      afterToolCall?.({
+        sessionId: "snapshot-session",
+        toolName: "open",
+        params: { url: `https://example.com/${makeLongText(`open-${index}`, 12).replaceAll(" ", "/")}` },
+        result: "ok",
+      });
+    }
+
+    for (let index = 0; index < 4; index += 1) {
+      afterToolCall?.({
+        sessionId: "snapshot-session",
+        toolName: `custom.untracked-${index}`,
+        params: { pattern: makeLongText(`pattern-${index}`, 20) },
+        result: "ok",
+      });
+    }
+
+    const result = beforeCompaction?.({
+      sessionId: "snapshot-session",
+    }) as { contextModeSnapshot?: string } | undefined;
+
+    assert.ok(result?.contextModeSnapshot);
+    const snapshot = JSON.parse(result?.contextModeSnapshot ?? "") as {
+      p1: unknown[];
+      p2: unknown[];
+      p3: unknown[];
+      p4: unknown[];
+      related: unknown[];
+    };
+
+    assert.equal(Buffer.byteLength(result?.contextModeSnapshot ?? "", "utf8") <= 2048, true);
+    assert.equal(snapshot.p1.length >= 2, true);
+    assert.equal(snapshot.p2.length >= 1, true);
+    assert.equal(snapshot.p1.length + snapshot.p2.length + snapshot.p3.length + snapshot.p4.length >= 3, true);
+  } finally {
+    restore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("context-mode skips registration when disabled and reports database init failures", { concurrency: false }, () => {
+  const disabled = registerPlugin({
+    enabled: false,
+  });
+
+  try {
+    assert.deepEqual(Array.from(disabled.handlers.keys()), []);
+    assert.equal(
+      disabled.infoEntries.some(entry => entry[1] === "plugin disabled by config"),
+      true,
+    );
+  } finally {
+    disabled.restore();
+  }
+
+  const root = mkdtempSync(join(tmpdir(), "context-mode-init-error-"));
+  const badDbPath = join(root, "broken.db");
+  mkdirSync(badDbPath, { recursive: true });
+
+  const broken = registerPlugin({
+    dbPath: badDbPath,
+  });
+
+  try {
+    assert.deepEqual(Array.from(broken.handlers.keys()), []);
+    assert.equal(
+      broken.errorEntries.some(entry => entry[1] === "failed to initialize database (is better-sqlite3 installed?)"),
+      true,
+    );
+  } finally {
+    broken.restore();
     rmSync(root, { recursive: true, force: true });
   }
 });
