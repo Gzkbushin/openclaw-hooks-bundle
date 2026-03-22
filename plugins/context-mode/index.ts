@@ -99,12 +99,25 @@ const TOOL_PRIORITIES: Record<string, number> = {
   write: 1,
   edit: 1,
   apply_patch: 1,
+  multi_edit: 1,
+  multiedit: 1,
   bash: 2,
   exec: 2,
+  exec_command: 2,
+  write_stdin: 2,
   read: 2,
   grep: 3,
   glob: 3,
   webfetch: 3,
+  search_query: 3,
+  image_query: 3,
+  open: 3,
+  click: 3,
+  screenshot: 3,
+  weather: 3,
+  sports: 3,
+  finance: 3,
+  time: 3,
 };
 
 const SANDBOX_TOOLS = new Set([
@@ -123,7 +136,9 @@ const DEFAULT_RESOURCE_LIMITS: Required<ResourceLimitsConfig> = {
 };
 
 function normalizeToolName(raw: string): string {
-  return raw.trim().toLowerCase();
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) return "";
+  return normalized.split(".").at(-1) || normalized;
 }
 
 function expandHomePath(input: string): string {

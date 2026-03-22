@@ -27,6 +27,27 @@ test("danger blocker blocks rm -rf without approval", () => {
   assert.match(String(result?.blockReason), /rm -rf/);
 });
 
+test("plugin normalizes namespaced exec tool names before safety checks", () => {
+  let beforeToolCall: ((event: unknown) => unknown) | undefined;
+
+  plugin.register({
+    logger: {},
+    on(hookName, handler) {
+      if (hookName === "before_tool_call") {
+        beforeToolCall = handler;
+      }
+    }
+  });
+
+  const result = beforeToolCall?.({
+    toolName: "functions.exec_command",
+    params: { cmd: "rm -rf /tmp/demo" }
+  }) as { block?: boolean; blockReason?: string } | undefined;
+
+  assert.equal(result?.block, true);
+  assert.match(String(result?.blockReason), /rm -rf/);
+});
+
 test("danger blocker allows rm -rf with approved true", () => {
   const result = runDangerBlocker({ toolName: "exec", params: { command: "rm -rf /tmp/demo", approved: true } });
   assert.equal(result, undefined);

@@ -68,7 +68,9 @@ export function withSafeErrorHandling<T>(
 }
 
 export function normalizeToolName(toolName: string | undefined): string {
-  return String(toolName || "").trim().toLowerCase();
+  const normalized = String(toolName || "").trim().toLowerCase();
+  if (!normalized) return "";
+  return normalized.split(".").at(-1) || normalized;
 }
 
 export function isExecLikeTool(toolName: string | undefined): boolean {

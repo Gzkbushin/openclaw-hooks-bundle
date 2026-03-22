@@ -326,3 +326,43 @@ test("context-mode loads project YAML config and inline config still wins", { co
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("context-mode normalizes namespaced tool names and classifies common runtime tools", { concurrency: false }, () => {
+  const root = mkdtempSync(join(tmpdir(), "context-mode-tool-normalization-"));
+  const { handlers, restore } = registerPlugin({
+    dbPath: root,
+  });
+
+  try {
+    const afterToolCall = handlers.get("after_tool_call");
+    assert.ok(afterToolCall);
+
+    afterToolCall?.({
+      sessionId: "namespaced-tools",
+      toolName: "functions.exec_command",
+      params: { cmd: "ls -la" },
+      result: "ok",
+    });
+    afterToolCall?.({
+      sessionId: "namespaced-tools",
+      toolName: "web.open",
+      params: { url: "https://example.com" },
+      result: "ok",
+    });
+
+    const db = openDb(root);
+    const rows = db
+      .prepare("SELECT tool_name, priority FROM session_events ORDER BY id ASC")
+      .all() as Array<{ tool_name: string; priority: number }>;
+    db.close();
+
+    assert.deepEqual(rows, [
+      { tool_name: "exec_command", priority: 2 },
+      { tool_name: "routing_violation", priority: 1 },
+      { tool_name: "open", priority: 3 },
+    ]);
+  } finally {
+    restore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
