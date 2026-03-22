@@ -163,12 +163,17 @@ $ write new-feature.ts
 
 ---
 
-## 🏆 为什么选择我们 | Why Us
+## 🎯 项目特点 | Project Features
 
-### 与其他项目对比 | Comparison
+### 核心特性 | Key Features
 
-| 特性 | Features | 我们 | Others | 其他 |
-|------|---------|------|--------|------|
+- **8个 Hooks** - 质量保障 + 上下文管理 | Quality + Context
+- **<25ms 性能** - 极低的性能影响 | Minimal performance impact
+- **一键安装** - 简单快捷 | Simple and fast
+- **完整文档** - 中英文双语 | Bilingual documentation
+- **40% Token 节省** - 智能上下文管理 | Smart context management
+
+---
 | Hooks 数量 | Hook Count | **8个** | 1-3个 |
 | 双插件 | Dual Plugins | ✅ | ❌ |
 | 性能 | Performance | **<25ms** | 未说明 | N/A |
