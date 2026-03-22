@@ -182,15 +182,13 @@ $ write new-feature.ts
 | Token 节省 | Token Savings | **40%** | 无 | None |
 | 测试覆盖 | Test Coverage | ✅ | 很少 | Rare |
 
-### 市场地位 | Market Position
+### 核心特性 | Key Features
 
-- 🥇 **第1个** 双插件组合 (Quality + Context) | **1st** dual plugin combo
-- 🥇 **第1个** 8个hooks的完整工具集 | **1st** 8-hook complete toolkit
-- 🥇 **第1个** 一键安装脚本 | **1st** one-click install script
-- 🥇 **第1个** 明确性能指标 (<25ms) | **1st** explicit performance metrics
-- 🥇 **第1个** Token节省优化 (40%) | **1st** token savings optimization (40%)
-
-**GitHub Star 排名 | Star Ranking**: **前3名 | Top 3** (所有 OpenClaw Hooks 项目 | among all OpenClaw Hooks projects)
+- **8个 Hooks** - 质量保障 + 上下文管理 | Quality + Context
+- **<25ms 性能** - 极低的性能影响 | Minimal performance impact
+- **一键安装** - 简单快捷 | Simple and fast
+- **完整文档** - 中英文双语 | Bilingual documentation
+- **40% Token 节省** - 智能上下文管理 | Smart context management
 
 ---
 
