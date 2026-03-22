@@ -164,6 +164,15 @@ $ write new-feature.ts
 
 详见各插件目录下的配置文件 | See config files in plugin directories
 
+### 开发校验 | Validation
+
+在仓库根目录运行以下命令，会同时校验 `openclaw-quality-hooks` 和 `context-mode`，包括敏感信息过滤与快照资源管理相关测试：
+
+```bash
+npm test
+npm run lint
+```
+
 ---
 
 ## 🎯 项目特点 | Project Features
