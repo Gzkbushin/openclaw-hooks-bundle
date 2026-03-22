@@ -7,6 +7,7 @@ OpenClaw 原生插件版本的 context-mode，实现：
 - `session_start` 快照恢复注入
 - FTS5 + BM25 检索（用于快照相关片段提取）
 - P1-P4 优先级分层与智能摘要提取
+- 敏感信息脱敏（邮箱、手机号、密码、token、API key）
 
 ## 文件
 
@@ -25,6 +26,19 @@ OpenClaw 原生插件版本的 context-mode，实现：
 
 `dbPath` 可传目录或 `.db` 文件路径。
 
+## 隐私保护
+
+`context-mode` 在写入 SQLite、生成快照、恢复上下文前会统一做敏感信息过滤，默认脱敏以下内容：
+
+- email 地址
+- 电话号码
+- `password` / `passwd` / `pwd`
+- `token` / `accessToken` / `refreshToken`
+- `apiKey` / `clientSecret` / `secretKey`
+- 常见 JWT、GitHub token、OpenAI key、AWS access key
+
+脱敏后会以 `[REDACTED:<type>]` 占位，避免敏感原文进入持久化上下文。
+
 ## 数据库结构
 
 - `session_meta`
@@ -35,6 +49,7 @@ OpenClaw 原生插件版本的 context-mode，实现：
 ## 测试
 
 ```bash
-cd /tmp/context-mode-openclaw
-node test/smoke.mjs
+cd plugins/context-mode
+npm test
+npm run lint
 ```

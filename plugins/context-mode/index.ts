@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
+import { redactSensitiveData } from "./sensitive-data-filter.ts";
 
 type AnyRecord = Record<string, unknown>;
 
@@ -113,12 +114,13 @@ function expandHomePath(input: string): string {
 }
 
 function toJson(value: unknown): string {
-  if (value == null) return "";
-  if (typeof value === "string") return value;
+  const sanitized = redactSensitiveData(value);
+  if (sanitized == null) return "";
+  if (typeof sanitized === "string") return sanitized;
   try {
-    return JSON.stringify(value);
+    return JSON.stringify(sanitized);
   } catch {
-    return String(value);
+    return String(sanitized);
   }
 }
 
@@ -214,8 +216,10 @@ function resolveSessionId(payload: unknown, fallback: string): string {
 }
 
 function makeEventSummary(toolName: string, params: AnyRecord, result: unknown, isError: boolean): { summary: string; detail: string } {
-  const paramSummary = pickParamsSummary(params);
-  const resultSummary = pickResultSummary(result);
+  const safeParams = redactSensitiveData(params) as AnyRecord;
+  const safeResult = redactSensitiveData(result);
+  const paramSummary = pickParamsSummary(safeParams);
+  const resultSummary = pickResultSummary(safeResult);
 
   const summaryParts = [
     toolName,
@@ -227,8 +231,8 @@ function makeEventSummary(toolName: string, params: AnyRecord, result: unknown, 
   const detail = JSON.stringify(
     {
       tool: toolName,
-      params,
-      result: compactText(toJson(result), 220),
+      params: safeParams,
+      result: compactText(toJson(safeResult), 220),
       isError,
     },
     null,

@@ -7,7 +7,9 @@
   "license": "Elastic-2.0",
   "main": "./index.ts",
   "scripts": {
-    "check": "node ./test/smoke.mjs"
+    "test": "node --experimental-strip-types --test test/*.test.ts && node ./test/smoke.mjs",
+    "lint": "node --experimental-strip-types -e \"await import('./index.ts'); await import('./sensitive-data-filter.ts');\" && node --check test/smoke.mjs",
+    "check": "npm run test && npm run lint"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2"

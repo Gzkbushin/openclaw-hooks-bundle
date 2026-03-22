@@ -25,6 +25,7 @@
 - 📝 **Record Tool** - 记录工具调用
 - 💾 **Save Snapshot** - 保存智能快照
 - 🔄 **Restore Context** - 自动恢复上下文
+- 🔒 **Sensitive Data Filter** - 脱敏邮箱、手机号、密码、token、API key
 
 ### ⚡ 性能优势 | Performance
 
@@ -237,6 +238,7 @@ If this project helps you, please give it a Star ⭐
 记录工具调用 | Record tool calls
 - 完整调用历史 | Complete call history
 - 结构化存储 | Structured storage
+- 写入前自动脱敏敏感字段 | Redact sensitive fields before persistence
 
 #### Save Snapshot 💾
 保存智能快照 | Save smart snapshots
