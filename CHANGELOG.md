@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### 新增
+- ✅ YAML 配置文件支持
+  - 支持项目级 `openclaw-hooks.config.yaml`
+  - 支持用户级 `~/.openclaw-hooks.config.yaml`
+  - 配置优先级：项目 > 用户 > 默认
+  - 添加配置示例与校验告警
+
 - ✅ Danger Blocker 审计日志
   - JSONL 审计事件输出，带时间戳
   - 默认写入 `audit.log.jsonl`

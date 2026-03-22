@@ -1,0 +1,18 @@
+# Project-level settings override user-level settings.
+# User-level settings live at ~/.openclaw-hooks.config.yaml.
+
+qualityHooks:
+  enabled: true
+  logDir: ~/.openclaw/logs/openclaw-quality-hooks
+  audit:
+    enabled: true
+    fileName: audit.log.jsonl
+    maxBytes: 1048576
+    maxFiles: 5
+
+contextMode:
+  enabled: true
+  dbPath: ~/.context-mode/db
+  maxContextSnapshots: 50
+  maxMemorySnapshots: 100
+  snapshotRetentionDays: 7

@@ -684,7 +684,11 @@ export default {
     const config = resolvePluginConfig(
       (globalThis as { OPENCLAW_PLUGIN_CONFIG?: AnyRecord }).OPENCLAW_PLUGIN_CONFIG,
       fileURLToPath(new URL("./openclaw.config.json", import.meta.url)),
-      log
+      log,
+      {
+        pluginKeys: ["contextMode", "context-mode", "contextModeOpenclaw"],
+        schema: configSchema
+      }
     ) as AnyRecord;
     const enabled = config.enabled !== false;
     if (!enabled) {

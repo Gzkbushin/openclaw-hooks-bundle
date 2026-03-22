@@ -20,6 +20,25 @@ type PluginConfig = {
   audit?: AuditLoggerConfig;
 };
 
+const pluginConfigSchema = {
+  type: "object",
+  properties: {
+    enabled: { type: "boolean" },
+    configFile: { type: "string" },
+    logDir: { type: "string" },
+    audit: {
+      type: "object",
+      properties: {
+        enabled: { type: "boolean" },
+        logDir: { type: "string" },
+        fileName: { type: "string" },
+        maxBytes: { type: "integer" },
+        maxFiles: { type: "integer" }
+      }
+    }
+  }
+} as const;
+
 export const plugin = {
   id: "openclaw-quality-hooks",
   name: "OpenClaw Quality Hooks",
@@ -29,7 +48,11 @@ export const plugin = {
     const config = resolvePluginConfig(
       api.pluginConfig,
       fileURLToPath(new URL("./openclaw.config.json", import.meta.url)),
-      api.logger
+      api.logger,
+      {
+        pluginKeys: ["qualityHooks", "openclaw-quality-hooks", "openclawQualityHooks"],
+        schema: pluginConfigSchema
+      }
     ) as PluginConfig;
     if (config.enabled === false) {
       api.logger.info?.("openclaw-quality-hooks disabled by config");

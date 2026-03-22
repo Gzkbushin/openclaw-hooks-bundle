@@ -17,18 +17,22 @@ OpenClaw 原生插件版本的 context-mode，实现：
 
 ## 配置
 
-```json
-{
-  "enabled": true,
-  "configFile": "~/.openclaw/extensions/context-mode/openclaw.config.json",
-  "dbPath": "~/.context-mode/db",
-  "maxContextSnapshots": 50,
-  "maxMemorySnapshots": 100,
-  "snapshotRetentionDays": 7
-}
+```yaml
+contextMode:
+  enabled: true
+  dbPath: ~/.context-mode/db
+  maxContextSnapshots: 50
+  maxMemorySnapshots: 100
+  snapshotRetentionDays: 7
 ```
 
-默认会读取插件目录下的 `openclaw.config.json`。如需把配置放到别处，可通过 `configFile` 指向自定义 JSON 文件。
+默认会按以下优先级加载配置：
+
+1. 项目级 `openclaw-hooks.config.yaml`
+2. 用户级 `~/.openclaw-hooks.config.yaml`
+3. 插件目录下的 `openclaw.config.json`
+
+如需把配置放到别处，可通过 `configFile` 指向自定义 JSON/YAML 文件；运行时传入的内联配置仍然覆盖文件配置。
 
 `dbPath` 可传目录或 `.db` 文件路径。
 

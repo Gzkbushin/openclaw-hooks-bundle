@@ -74,6 +74,31 @@ cd openclaw-hooks-bundle
 ./UNINSTALL.sh
 ```
 
+### YAML 配置 | YAML Configuration
+
+支持可选的 `openclaw-hooks.config.yaml`，加载优先级如下：
+
+1. 项目配置：从当前工作目录向上查找 `openclaw-hooks.config.yaml`
+2. 用户配置：`~/.openclaw-hooks.config.yaml`
+3. 插件默认配置：各插件目录下的 `openclaw.config.json`
+
+可用配置示例见仓库根目录的 `openclaw-hooks.config.yaml.example`。两个插件都支持 `configFile` 指向额外的 JSON/YAML 文件，且内联配置仍然拥有最高优先级。
+
+```yaml
+qualityHooks:
+  enabled: true
+  audit:
+    maxFiles: 5
+
+contextMode:
+  enabled: true
+  maxContextSnapshots: 50
+  maxMemorySnapshots: 100
+  snapshotRetentionDays: 7
+```
+
+配置项类型错误或键名无效时，Hook 会输出警告并忽略对应项，不会中断插件启动。
+
 ---
 
 ## 📊 工作原理 | How It Works

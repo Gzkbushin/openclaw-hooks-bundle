@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import process from "node:process";
 
 import plugin from "../index.ts";
 
@@ -245,6 +246,83 @@ test("context-mode loads config from file and inline config wins", { concurrency
     assert.equal(existsSync(join(inlineDbRoot, "context-mode-openclaw.db")), true);
   } finally {
     fromInline.restore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("context-mode loads project YAML config and inline config still wins", { concurrency: false }, () => {
+  const root = mkdtempSync(join(tmpdir(), "context-mode-config-yaml-"));
+  const home = join(root, "home");
+  const project = join(root, "project");
+  const userDbRoot = join(root, "from-user");
+  const projectDbRoot = join(root, "from-project");
+  const inlineDbRoot = join(root, "from-inline");
+  const previousHome = process.env.HOME;
+  const previousCwd = process.cwd();
+
+  try {
+    mkdirSync(home, { recursive: true });
+    mkdirSync(project, { recursive: true });
+
+    writeFileSync(
+      join(home, ".openclaw-hooks.config.yaml"),
+      [
+        "contextMode:",
+        `  dbPath: ${userDbRoot}`,
+        "  maxMemorySnapshots: 2",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      join(project, "openclaw-hooks.config.yaml"),
+      [
+        "contextMode:",
+        `  dbPath: ${projectDbRoot}`,
+        "  maxMemorySnapshots: 3",
+        ""
+      ].join("\n")
+    );
+
+    process.env.HOME = home;
+    process.chdir(project);
+
+    const fromProject = registerPlugin({});
+    try {
+      const afterToolCall = fromProject.handlers.get("after_tool_call");
+      assert.ok(afterToolCall);
+      afterToolCall?.({
+        sessionId: "config-from-project-yaml",
+        toolName: "read",
+        params: { path: "/tmp/from-project.yaml" },
+        result: "ok",
+      });
+      assert.equal(existsSync(join(projectDbRoot, "context-mode-openclaw.db")), true);
+      assert.equal(existsSync(join(userDbRoot, "context-mode-openclaw.db")), false);
+    } finally {
+      fromProject.restore();
+    }
+
+    const fromInline = registerPlugin({ dbPath: inlineDbRoot });
+    try {
+      const afterToolCall = fromInline.handlers.get("after_tool_call");
+      assert.ok(afterToolCall);
+      afterToolCall?.({
+        sessionId: "config-from-inline-yaml",
+        toolName: "read",
+        params: { path: "/tmp/from-inline.yaml" },
+        result: "ok",
+      });
+      assert.equal(existsSync(join(inlineDbRoot, "context-mode-openclaw.db")), true);
+    } finally {
+      fromInline.restore();
+    }
+  } finally {
+    process.chdir(previousCwd);
+    if (previousHome === undefined) {
+      delete process.env.HOME;
+    } else {
+      process.env.HOME = previousHome;
+    }
     rmSync(root, { recursive: true, force: true });
   }
 });
