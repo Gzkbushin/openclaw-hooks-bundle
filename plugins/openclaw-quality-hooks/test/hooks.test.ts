@@ -39,6 +39,11 @@ test("danger blocker blocks --no-verify and :q!", () => {
   assert.equal(forceQuit?.block, true);
 });
 
+test("danger blocker allows safe exec commands", () => {
+  const result = runDangerBlocker({ toolName: "exec", params: { command: "echo hello" } });
+  assert.equal(result, undefined);
+});
+
 test("smart reminder warns for long command and git push", () => {
   const warnings: string[] = [];
   const logger = {
@@ -82,6 +87,57 @@ fs.writeFileSync(file, "// prettier-ran\\n", "utf8");
   rmSync(root, { recursive: true, force: true });
 });
 
+test("auto formatter falls back to prettier when biome fails", () => {
+  const root = createTempProject();
+  const filePath = join(root, "demo.ts");
+  const markerPath = join(root, "formatter.log");
+  writeFileSync(filePath, "const   value=1;\n");
+  writeExecutable(
+    join(root, "node_modules", ".bin", "biome"),
+    `#!/usr/bin/env node
+const fs = require("node:fs");
+fs.appendFileSync(${JSON.stringify(markerPath)}, "biome\\n");
+process.exit(1);
+`
+  );
+  writeExecutable(
+    join(root, "node_modules", ".bin", "prettier"),
+    `#!/usr/bin/env node
+const fs = require("node:fs");
+const file = process.argv[process.argv.length - 1];
+fs.appendFileSync(${JSON.stringify(markerPath)}, "prettier\\n");
+fs.writeFileSync(file, "// prettier-fallback\\n", "utf8");
+`
+  );
+  writeFileSync(join(root, "package.json"), "{\"name\":\"demo\"}");
+
+  runAutoFormatter({ toolName: "edit", params: { file_path: filePath } }, {});
+
+  assert.equal(readFileSync(filePath, "utf8"), "// prettier-fallback\n");
+  assert.equal(readFileSync(markerPath, "utf8"), "biome\nprettier\n");
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("auto formatter runs ruff for python files", () => {
+  const root = createTempProject();
+  const filePath = join(root, "demo.py");
+  writeFileSync(filePath, "x=1\n");
+  writeExecutable(
+    join(root, "node_modules", ".bin", "ruff"),
+    `#!/usr/bin/env node
+const fs = require("node:fs");
+const file = process.argv[process.argv.length - 1];
+fs.writeFileSync(file, "# ruff-ran\\n", "utf8");
+`
+  );
+  writeFileSync(join(root, "package.json"), "{\"name\":\"demo\"}");
+
+  runAutoFormatter({ toolName: "edit", params: { file_path: filePath } }, {});
+
+  assert.equal(readFileSync(filePath, "utf8"), "# ruff-ran\n");
+  rmSync(root, { recursive: true, force: true });
+});
+
 test("console log audit warns when console.log is present", () => {
   const root = createTempProject();
   const filePath = join(root, "debug.ts");
@@ -108,6 +164,20 @@ test("console log audit ignores files without console.log", () => {
 
   runConsoleLogAudit(
     { toolName: "edit", params: { file_path: filePath } },
+    { warn: (...args: unknown[]) => warnings.push(args.join(" ")) }
+  );
+
+  assert.deepEqual(warnings, []);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test("console log audit ignores unreadable files", () => {
+  const root = createTempProject();
+  const warnings: string[] = [];
+  const missingPath = join(root, "missing.ts");
+
+  runConsoleLogAudit(
+    { toolName: "edit", params: { file_path: missingPath } },
     { warn: (...args: unknown[]) => warnings.push(args.join(" ")) }
   );
 

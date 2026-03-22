@@ -78,11 +78,58 @@ test("writeAuditEvent rotates audit logs when they exceed the configured size", 
       },
       config
     );
+    writeAuditEvent(
+      logDir,
+      {
+        timestamp: "2026-03-22T10:03:00.000Z",
+        type: "dangerous_command_blocked",
+        action: "blocked",
+        severity: "critical",
+        toolName: "exec",
+        command: "rm -rf /tmp/four",
+        reason: "blocked"
+      },
+      config
+    );
 
     const currentPath = getAuditLogPath(logDir, config);
     const rotatedPath = `${currentPath}.1`;
+    const oldestPath = `${currentPath}.2`;
     assert.equal(readFileSync(currentPath, "utf8").trim().split("\n").length, 1);
     assert.equal(readFileSync(rotatedPath, "utf8").trim().split("\n").length >= 1, true);
+    assert.equal(readFileSync(oldestPath, "utf8").trim().split("\n").length >= 1, true);
+  } finally {
+    rmSync(logDir, { recursive: true, force: true });
+  }
+});
+
+test("writeAuditEvent drops the current file when rotation keeps no backups", () => {
+  const logDir = createTempLogDir();
+  const config = { maxBytes: 1, maxFiles: 1 };
+
+  try {
+    writeAuditEvent(logDir, {
+      timestamp: "2026-03-22T11:00:00.000Z",
+      type: "dangerous_command_blocked",
+      action: "blocked",
+      severity: "critical",
+      toolName: "exec",
+      command: "rm -rf /tmp/one",
+      reason: "blocked"
+    }, config);
+    writeAuditEvent(logDir, {
+      timestamp: "2026-03-22T11:01:00.000Z",
+      type: "dangerous_command_allowed",
+      action: "allowed",
+      severity: "warn",
+      toolName: "exec",
+      command: "rm -rf /tmp/two",
+      reason: "approved"
+    }, config);
+
+    const currentPath = getAuditLogPath(logDir, config);
+    const entries = readFileSync(currentPath, "utf8").trim().split("\n").map(line => JSON.parse(line));
+    assert.deepEqual(entries.map(entry => entry.type), ["dangerous_command_allowed"]);
   } finally {
     rmSync(logDir, { recursive: true, force: true });
   }
@@ -125,6 +172,42 @@ test("queryAuditEvents filters audit records by type and time", () => {
     });
 
     assert.deepEqual(filtered.map(event => event.type), ["dangerous_command_allowed"]);
+  } finally {
+    rmSync(logDir, { recursive: true, force: true });
+  }
+});
+
+test("queryAuditEvents reads rotated logs and ignores malformed lines", () => {
+  const logDir = createTempLogDir();
+  const config = { maxFiles: 3 };
+  const currentPath = getAuditLogPath(logDir, config);
+
+  try {
+    writeFileSync(
+      `${currentPath}.1`,
+      [
+        "{\"timestamp\":\"2026-03-22T08:00:00.000Z\",\"type\":\"dangerous_command_blocked\",\"action\":\"blocked\",\"severity\":\"critical\",\"toolName\":\"exec\"}",
+        "not-json",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+    writeFileSync(
+      currentPath,
+      [
+        "{\"timestamp\":\"2026-03-22T09:00:00.000Z\",\"type\":\"dangerous_command_allowed\",\"action\":\"allowed\",\"severity\":\"warn\",\"toolName\":\"exec\"}",
+        ""
+      ].join("\n"),
+      "utf8"
+    );
+
+    const filtered = queryAuditEvents(logDir, {
+      type: "dangerous_command_blocked",
+      action: "blocked",
+      limit: 1
+    }, config);
+
+    assert.deepEqual(filtered.map(event => event.type), ["dangerous_command_blocked"]);
   } finally {
     rmSync(logDir, { recursive: true, force: true });
   }
