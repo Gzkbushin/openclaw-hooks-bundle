@@ -3,7 +3,7 @@ import { runConsoleLogAudit } from "./hooks/console-log-audit.ts";
 import { runDangerBlocker } from "./hooks/danger-blocker.ts";
 import { scheduleQualityGate } from "./hooks/quality-gate.ts";
 import { runSmartReminder } from "./hooks/smart-reminder.ts";
-import { expandHome, normalizeToolName, type Logger } from "./hooks/shared.ts";
+import { expandHome, normalizeToolName, type Logger, withSafeErrorHandling } from "./hooks/shared.ts";
 
 type PluginApi = {
   pluginConfig?: Record<string, unknown>;
@@ -37,9 +37,11 @@ export const plugin = {
           toolName: normalizeToolName(event.toolName),
           params: event.params || {}
         };
-        const blocked = runDangerBlocker(normalizedEvent);
+        const blocked = withSafeErrorHandling("DangerBlocker", () => runDangerBlocker(normalizedEvent), api.logger);
         if (blocked?.block) return blocked;
-        runSmartReminder(normalizedEvent, ctx || {}, api.logger, logDir);
+        withSafeErrorHandling("SmartReminder", () => {
+          runSmartReminder(normalizedEvent, ctx || {}, api.logger, logDir);
+        }, api.logger);
         return undefined;
       },
       { priority: 50 }
@@ -53,9 +55,15 @@ export const plugin = {
           toolName: normalizeToolName(event.toolName),
           params: event.params || {}
         };
-        runConsoleLogAudit(normalizedEvent, api.logger);
-        runAutoFormatter(normalizedEvent, api.logger);
-        scheduleQualityGate(normalizedEvent, api.logger, logDir);
+        withSafeErrorHandling("ConsoleLogAudit", () => {
+          runConsoleLogAudit(normalizedEvent, api.logger);
+        }, api.logger);
+        withSafeErrorHandling("AutoFormatter", () => {
+          runAutoFormatter(normalizedEvent, api.logger);
+        }, api.logger);
+        withSafeErrorHandling("QualityGate", () => {
+          scheduleQualityGate(normalizedEvent, api.logger, logDir);
+        }, api.logger);
       },
       { priority: 50 }
     );

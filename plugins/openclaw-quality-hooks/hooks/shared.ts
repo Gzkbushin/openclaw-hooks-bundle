@@ -41,6 +41,20 @@ export type CommandResolution = {
   argsPrefix: string[];
 };
 
+export function withSafeErrorHandling<T>(
+  hookName: string,
+  fn: () => T,
+  logger?: Logger
+): T | undefined {
+  try {
+    return fn();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger?.error?.(`[Hook] ${hookName} failed: ${msg}`);
+    return undefined;
+  }
+}
+
 export function normalizeToolName(toolName: string | undefined): string {
   return String(toolName || "").trim().toLowerCase();
 }
