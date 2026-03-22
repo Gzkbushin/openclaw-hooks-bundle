@@ -20,11 +20,20 @@ OpenClaw 原生插件版本的 context-mode，实现：
 ```json
 {
   "enabled": true,
-  "dbPath": "~/.context-mode/db"
+  "dbPath": "~/.context-mode/db",
+  "maxContextSnapshots": 50,
+  "maxMemorySnapshots": 100,
+  "snapshotRetentionDays": 7
 }
 ```
 
 `dbPath` 可传目录或 `.db` 文件路径。
+
+- `maxContextSnapshots`：最多保留多少条 `session_resume` 快照，超出后按 FIFO 删除最旧快照
+- `maxMemorySnapshots`：最多保留多少条 `session_events` 记忆快照，超出后按 FIFO 删除最旧事件
+- `snapshotRetentionDays`：快照和记忆事件的保留天数，过期数据会自动清理
+
+每次工具调用和压缩前都会记录资源统计日志，并在需要时自动清理超限或过期数据。
 
 ## 隐私保护
 

@@ -36,6 +36,12 @@ export type ToolContext = {
   toolName?: string;
 };
 
+export type ResourceLimitsConfig = {
+  maxContextSnapshots?: number;
+  maxMemorySnapshots?: number;
+  snapshotRetentionDays?: number;
+};
+
 export type CommandResolution = {
   bin: string;
   argsPrefix: string[];

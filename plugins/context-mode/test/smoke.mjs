@@ -24,5 +24,11 @@ assert(indexTs.includes("bm25(session_events_fts"), "BM25 query missing");
 assert(indexTs.includes("buildSnapshot(events, related, 2048)"), "2KB snapshot budget missing");
 assert(indexTs.includes("routing_violation"), "sandbox routing guard event missing");
 assert(indexTs.includes("redactSensitiveData"), "sensitive data filter integration missing");
+for (const key of ["maxContextSnapshots", "maxMemorySnapshots", "snapshotRetentionDays"]) {
+  assert(indexTs.includes(key), `missing resource config: ${key}`);
+  assert(Object.prototype.hasOwnProperty.call(manifest.configSchema.properties, key), `manifest config missing: ${key}`);
+}
+assert(indexTs.includes("cleanupResources"), "resource cleanup logic missing");
+assert(indexTs.includes("resource stats"), "resource stats logging missing");
 
 console.log("smoke test passed");

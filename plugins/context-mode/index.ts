@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
+import type { ResourceLimitsConfig } from "../openclaw-quality-hooks/hooks/shared.ts";
 import { redactSensitiveData } from "./sensitive-data-filter.ts";
 
 type AnyRecord = Record<string, unknown>;
@@ -67,11 +68,21 @@ type SearchRow = {
   score: number;
 };
 
+type ResourceStats = {
+  contextSnapshots: number;
+  memorySnapshots: number;
+};
+
+type CleanupStats = ResourceStats & {
+  deletedContextSnapshots: number;
+  deletedMemorySnapshots: number;
+};
+
 type DB = {
   pragma: (stmt: string) => unknown;
   exec: (sql: string) => unknown;
   prepare: (sql: string) => {
-    run: (...args: unknown[]) => unknown;
+    run: (...args: unknown[]) => { changes?: number } | unknown;
     get: (...args: unknown[]) => unknown;
     all: (...args: unknown[]) => unknown[];
   };
@@ -103,6 +114,12 @@ const SANDBOX_TOOLS = new Set([
   "ctx_search",
   "ctx_fetch_and_index",
 ]);
+
+const DEFAULT_RESOURCE_LIMITS: Required<ResourceLimitsConfig> = {
+  maxContextSnapshots: 50,
+  maxMemorySnapshots: 100,
+  snapshotRetentionDays: 7,
+};
 
 function normalizeToolName(raw: string): string {
   return raw.trim().toLowerCase();
@@ -249,12 +266,21 @@ class ContextModeDB {
   private db: DB;
   private ensureSessionStmt;
   private touchSessionStmt;
+  private touchSnapshotStmt;
   private insertEventStmt;
   private recentEventsStmt;
   private upsertResumeStmt;
   private getResumeStmt;
   private consumeResumeStmt;
-  private countStmt;
+  private countSessionEventsStmt;
+  private countAllEventsStmt;
+  private countResumeStmt;
+  private oldestResumeStmt;
+  private deleteResumeStmt;
+  private deleteExpiredResumeStmt;
+  private oldestEventStmt;
+  private deleteEventStmt;
+  private deleteExpiredEventStmt;
   private searchStmt;
 
   constructor(dbPath: string) {
@@ -296,19 +322,20 @@ class ContextModeDB {
         tokenize='porter unicode61'
       );
 
-      CREATE TRIGGER IF NOT EXISTS session_events_ai AFTER INSERT ON session_events BEGIN
+      DROP TRIGGER IF EXISTS session_events_ai;
+      CREATE TRIGGER session_events_ai AFTER INSERT ON session_events BEGIN
         INSERT INTO session_events_fts(rowid, session_id, summary, detail)
         VALUES (new.id, new.session_id, new.summary, new.detail);
       END;
 
-      CREATE TRIGGER IF NOT EXISTS session_events_ad AFTER DELETE ON session_events BEGIN
-        INSERT INTO session_events_fts(session_events_fts, rowid, session_id, summary, detail)
-        VALUES ('delete', old.id, old.session_id, old.summary, old.detail);
+      DROP TRIGGER IF EXISTS session_events_ad;
+      CREATE TRIGGER session_events_ad AFTER DELETE ON session_events BEGIN
+        DELETE FROM session_events_fts WHERE rowid = old.id;
       END;
 
-      CREATE TRIGGER IF NOT EXISTS session_events_au AFTER UPDATE ON session_events BEGIN
-        INSERT INTO session_events_fts(session_events_fts, rowid, session_id, summary, detail)
-        VALUES ('delete', old.id, old.session_id, old.summary, old.detail);
+      DROP TRIGGER IF EXISTS session_events_au;
+      CREATE TRIGGER session_events_au AFTER UPDATE ON session_events BEGIN
+        DELETE FROM session_events_fts WHERE rowid = old.id;
         INSERT INTO session_events_fts(rowid, session_id, summary, detail)
         VALUES (new.id, new.session_id, new.summary, new.detail);
       END;
@@ -332,6 +359,12 @@ class ContextModeDB {
       WHERE session_id = ?
     `);
 
+    this.touchSnapshotStmt = this.db.prepare(`
+      UPDATE session_meta
+      SET last_snapshot_at = datetime('now'), compact_count = compact_count + 1
+      WHERE session_id = ?
+    `);
+
     this.insertEventStmt = this.db.prepare(`
       INSERT INTO session_events (session_id, tool_name, priority, summary, detail, is_error)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -345,7 +378,31 @@ class ContextModeDB {
       LIMIT ?
     `);
 
-    this.countStmt = this.db.prepare(`SELECT COUNT(*) AS c FROM session_events WHERE session_id = ?`);
+    this.countSessionEventsStmt = this.db.prepare(`SELECT COUNT(*) AS c FROM session_events WHERE session_id = ?`);
+    this.countAllEventsStmt = this.db.prepare(`SELECT COUNT(*) AS c FROM session_events`);
+    this.countResumeStmt = this.db.prepare(`SELECT COUNT(*) AS c FROM session_resume`);
+    this.oldestResumeStmt = this.db.prepare(`
+      SELECT session_id
+      FROM session_resume
+      ORDER BY created_at ASC, session_id ASC
+      LIMIT ?
+    `);
+    this.deleteResumeStmt = this.db.prepare(`DELETE FROM session_resume WHERE session_id = ?`);
+    this.deleteExpiredResumeStmt = this.db.prepare(`
+      DELETE FROM session_resume
+      WHERE created_at < datetime('now', ?)
+    `);
+    this.oldestEventStmt = this.db.prepare(`
+      SELECT id
+      FROM session_events
+      ORDER BY id ASC
+      LIMIT ?
+    `);
+    this.deleteEventStmt = this.db.prepare(`DELETE FROM session_events WHERE id = ?`);
+    this.deleteExpiredEventStmt = this.db.prepare(`
+      DELETE FROM session_events
+      WHERE created_at < datetime('now', ?)
+    `);
 
     this.upsertResumeStmt = this.db.prepare(`
       INSERT INTO session_resume (session_id, snapshot, event_count, consumed)
@@ -394,13 +451,14 @@ class ContextModeDB {
   }
 
   getEventCount(sessionId: string): number {
-    const row = this.countStmt.get(sessionId) as { c: number } | undefined;
+    const row = this.countSessionEventsStmt.get(sessionId) as { c: number } | undefined;
     return row?.c ?? 0;
   }
 
   upsertResume(sessionId: string, snapshot: string): void {
     const eventCount = this.getEventCount(sessionId);
     this.upsertResumeStmt.run(sessionId, snapshot, eventCount);
+    this.touchSnapshotStmt.run(sessionId);
   }
 
   getResume(sessionId: string): ResumeRow | null {
@@ -421,6 +479,61 @@ class ContextModeDB {
 
     if (!safeQuery.trim()) return [];
     return this.searchStmt.all(safeQuery, sessionId, limit) as SearchRow[];
+  }
+
+  getResourceStats(): ResourceStats {
+    const contextRow = this.countResumeStmt.get() as { c: number } | undefined;
+    const memoryRow = this.countAllEventsStmt.get() as { c: number } | undefined;
+    return {
+      contextSnapshots: contextRow?.c ?? 0,
+      memorySnapshots: memoryRow?.c ?? 0,
+    };
+  }
+
+  cleanupResources(limits: Required<ResourceLimitsConfig>): CleanupStats {
+    const deletedContextSnapshots =
+      this.getRunChanges(this.deleteExpiredResumeStmt.run(`-${limits.snapshotRetentionDays} days`)) +
+      this.deleteOldestResumes(limits.maxContextSnapshots);
+    const deletedMemorySnapshots =
+      this.getRunChanges(this.deleteExpiredEventStmt.run(`-${limits.snapshotRetentionDays} days`)) +
+      this.deleteOldestEvents(limits.maxMemorySnapshots);
+    return {
+      ...this.getResourceStats(),
+      deletedContextSnapshots,
+      deletedMemorySnapshots,
+    };
+  }
+
+  private deleteOldestResumes(limit: number): number {
+    const stats = this.getResourceStats();
+    const excess = stats.contextSnapshots - limit;
+    if (excess <= 0) return 0;
+
+    const rows = this.oldestResumeStmt.all(excess) as Array<{ session_id: string }>;
+    let deleted = 0;
+    for (const row of rows) {
+      deleted += this.getRunChanges(this.deleteResumeStmt.run(row.session_id));
+    }
+    return deleted;
+  }
+
+  private deleteOldestEvents(limit: number): number {
+    const stats = this.getResourceStats();
+    const excess = stats.memorySnapshots - limit;
+    if (excess <= 0) return 0;
+
+    const rows = this.oldestEventStmt.all(excess) as Array<{ id: number }>;
+    let deleted = 0;
+    for (const row of rows) {
+      deleted += this.getRunChanges(this.deleteEventStmt.run(row.id));
+    }
+    return deleted;
+  }
+
+  private getRunChanges(result: unknown): number {
+    if (!result || typeof result !== "object") return 0;
+    const { changes } = result as { changes?: unknown };
+    return typeof changes === "number" ? changes : 0;
   }
 }
 
@@ -515,11 +628,39 @@ function isLikelyExecutionTool(toolName: string): boolean {
   return /bash|exec|shell|python|node|write|edit|apply_patch/.test(toolName);
 }
 
+function toPositiveInteger(value: unknown, fallback: number): number {
+  const numeric = typeof value === "string" ? Number(value) : value;
+  if (typeof numeric !== "number" || !Number.isFinite(numeric) || numeric < 1) {
+    return fallback;
+  }
+  return Math.floor(numeric);
+}
+
+function resolveResourceLimits(config: AnyRecord): Required<ResourceLimitsConfig> {
+  return {
+    maxContextSnapshots: toPositiveInteger(
+      config.maxContextSnapshots,
+      DEFAULT_RESOURCE_LIMITS.maxContextSnapshots,
+    ),
+    maxMemorySnapshots: toPositiveInteger(
+      config.maxMemorySnapshots,
+      DEFAULT_RESOURCE_LIMITS.maxMemorySnapshots,
+    ),
+    snapshotRetentionDays: toPositiveInteger(
+      config.snapshotRetentionDays,
+      DEFAULT_RESOURCE_LIMITS.snapshotRetentionDays,
+    ),
+  };
+}
+
 const configSchema = {
   type: "object",
   properties: {
     enabled: { type: "boolean", default: true },
     dbPath: { type: "string", default: "~/.context-mode/db" },
+    maxContextSnapshots: { type: "integer", default: DEFAULT_RESOURCE_LIMITS.maxContextSnapshots },
+    maxMemorySnapshots: { type: "integer", default: DEFAULT_RESOURCE_LIMITS.maxMemorySnapshots },
+    snapshotRetentionDays: { type: "integer", default: DEFAULT_RESOURCE_LIMITS.snapshotRetentionDays },
   },
 } as const;
 
@@ -544,6 +685,7 @@ export default {
       log.info?.("plugin disabled by config");
       return;
     }
+    const resourceLimits = resolveResourceLimits(config);
 
     const basePath = expandHomePath(String(config.dbPath || "~/.context-mode/db"));
     const dbFile = basePath.endsWith(".db") ? basePath : join(basePath, "context-mode-openclaw.db");
@@ -557,6 +699,29 @@ export default {
       log.error?.("failed to initialize database (is better-sqlite3 installed?)", error);
       return;
     }
+
+    const logResourceStats = (reason: string, sid: string, stats: CleanupStats): void => {
+      log.debug?.("resource stats", {
+        sid,
+        reason,
+        limits: resourceLimits,
+        contextSnapshots: stats.contextSnapshots,
+        memorySnapshots: stats.memorySnapshots,
+      });
+
+      if (stats.deletedContextSnapshots > 0 || stats.deletedMemorySnapshots > 0) {
+        log.info?.("resource cleanup", {
+          sid,
+          reason,
+          deletedContextSnapshots: stats.deletedContextSnapshots,
+          deletedMemorySnapshots: stats.deletedMemorySnapshots,
+          contextSnapshots: stats.contextSnapshots,
+          memorySnapshots: stats.memorySnapshots,
+        });
+      }
+    };
+
+    logResourceStats("startup", "global", db.cleanupResources(resourceLimits));
 
     let currentSessionId = randomUUID();
     db.ensureSession(currentSessionId);
@@ -614,6 +779,8 @@ export default {
         );
       }
 
+      logResourceStats("after_tool_call", sid, db.cleanupResources(resourceLimits));
+
       log.debug?.("captured tool event", {
         sid,
         toolName,
@@ -632,6 +799,7 @@ export default {
       const related = searchQuery ? db.searchSession(sid, searchQuery, 6) : [];
       const snapshot = buildSnapshot(events, related, 2048);
       db.upsertResume(sid, snapshot);
+      logResourceStats("before_compaction", sid, db.cleanupResources(resourceLimits));
 
       log.debug?.("snapshot built", {
         sid,
@@ -647,6 +815,7 @@ export default {
     log.info?.("registered hooks", {
       hooks: ["session_start", "after_tool_call", "before_compaction"],
       dbFile: resolve(dbFile),
+      resourceLimits,
     });
   },
 };
