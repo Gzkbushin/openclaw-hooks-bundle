@@ -49,11 +49,10 @@ paths.forEach(p => {
 });
 
 config.plugins.entries['openclaw-quality-hooks'] = {enabled: true, config: {
-  autoFormat: true, dangerBlocker: true, smartReminder: true, consoleLogAudit: true, qualityGate: true
+  configFile: path.join(process.env.HOME, '.openclaw/extensions/openclaw-quality-hooks', 'openclaw.config.json')
 }};
 config.plugins.entries['context-mode'] = {enabled: true, config: {
-  dataDir: path.join(process.env.HOME, '.openclaw/data/context-mode'),
-  maxSnapshots: 10, retrievalMode: 'priority'
+  configFile: path.join(process.env.HOME, '.openclaw/extensions/context-mode', 'openclaw.config.json')
 }};
 
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));

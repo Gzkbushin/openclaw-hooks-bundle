@@ -1,9 +1,10 @@
+import { fileURLToPath } from "node:url";
 import { runAutoFormatter } from "./hooks/auto-formatter.ts";
 import { runConsoleLogAudit } from "./hooks/console-log-audit.ts";
 import { runDangerBlocker } from "./hooks/danger-blocker.ts";
 import { scheduleQualityGate } from "./hooks/quality-gate.ts";
 import { runSmartReminder } from "./hooks/smart-reminder.ts";
-import { expandHome, normalizeToolName, type Logger, withSafeErrorHandling } from "./hooks/shared.ts";
+import { expandHome, normalizeToolName, resolvePluginConfig, type Logger, withSafeErrorHandling } from "./hooks/shared.ts";
 
 type PluginApi = {
   pluginConfig?: Record<string, unknown>;
@@ -13,6 +14,7 @@ type PluginApi = {
 
 type PluginConfig = {
   enabled?: boolean;
+  configFile?: string;
   logDir?: string;
 };
 
@@ -22,7 +24,11 @@ export const plugin = {
   version: "1.0.0",
   description: "ECC-style safety, reminders, formatting, and quality-gate hooks",
   register(api: PluginApi) {
-    const config = (api.pluginConfig || {}) as PluginConfig;
+    const config = resolvePluginConfig(
+      api.pluginConfig,
+      fileURLToPath(new URL("./openclaw.config.json", import.meta.url)),
+      api.logger
+    ) as PluginConfig;
     if (config.enabled === false) {
       api.logger.info?.("openclaw-quality-hooks disabled by config");
       return;

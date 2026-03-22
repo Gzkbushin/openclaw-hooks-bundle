@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -206,6 +206,45 @@ test("context-mode removes expired memory and context snapshots using retention 
     );
   } finally {
     restore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("context-mode loads config from file and inline config wins", { concurrency: false }, () => {
+  const root = mkdtempSync(join(tmpdir(), "context-mode-config-"));
+  const configFile = join(root, "context-mode.config.json");
+  const fileDbRoot = join(root, "from-file");
+  const inlineDbRoot = join(root, "from-inline");
+  writeFileSync(configFile, JSON.stringify({ dbPath: fileDbRoot }));
+
+  const fromFile = registerPlugin({ configFile });
+  try {
+    const afterToolCall = fromFile.handlers.get("after_tool_call");
+    assert.ok(afterToolCall);
+    afterToolCall?.({
+      sessionId: "config-from-file",
+      toolName: "read",
+      params: { path: "/tmp/from-file.txt" },
+      result: "ok",
+    });
+    assert.equal(existsSync(join(fileDbRoot, "context-mode-openclaw.db")), true);
+  } finally {
+    fromFile.restore();
+  }
+
+  const fromInline = registerPlugin({ configFile, dbPath: inlineDbRoot });
+  try {
+    const afterToolCall = fromInline.handlers.get("after_tool_call");
+    assert.ok(afterToolCall);
+    afterToolCall?.({
+      sessionId: "config-from-inline",
+      toolName: "read",
+      params: { path: "/tmp/from-inline.txt" },
+      result: "ok",
+    });
+    assert.equal(existsSync(join(inlineDbRoot, "context-mode-openclaw.db")), true);
+  } finally {
+    fromInline.restore();
     rmSync(root, { recursive: true, force: true });
   }
 });

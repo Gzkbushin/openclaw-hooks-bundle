@@ -20,12 +20,15 @@ OpenClaw 原生插件版本的 context-mode，实现：
 ```json
 {
   "enabled": true,
+  "configFile": "~/.openclaw/extensions/context-mode/openclaw.config.json",
   "dbPath": "~/.context-mode/db",
   "maxContextSnapshots": 50,
   "maxMemorySnapshots": 100,
   "snapshotRetentionDays": 7
 }
 ```
+
+默认会读取插件目录下的 `openclaw.config.json`。如需把配置放到别处，可通过 `configFile` 指向自定义 JSON 文件。
 
 `dbPath` 可传目录或 `.db` 文件路径。
 

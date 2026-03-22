@@ -87,6 +87,44 @@ export function expandHome(input: string): string {
   return join(process.env.HOME || "", input.slice(1));
 }
 
+export function loadJsonObjectFile(filePath: string, logger?: Logger): Record<string, unknown> {
+  if (!existsSync(filePath)) return {};
+
+  try {
+    const parsed = JSON.parse(readFileSync(filePath, "utf8"));
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+      logger?.warn?.(`[Hook] Ignoring config file ${filePath}: expected a JSON object`);
+      return {};
+    }
+    return parsed as Record<string, unknown>;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger?.warn?.(`[Hook] Failed to read config file ${filePath}: ${msg}`);
+    return {};
+  }
+}
+
+export function resolvePluginConfig(
+  inlineConfig: Record<string, unknown> | undefined,
+  defaultConfigPath: string,
+  logger?: Logger
+): Record<string, unknown> {
+  const mergedInlineConfig = inlineConfig ? { ...inlineConfig } : {};
+  const rawConfigFile = mergedInlineConfig.configFile;
+  delete mergedInlineConfig.configFile;
+
+  const configFile = typeof rawConfigFile === "string" && rawConfigFile.trim() !== ""
+    ? resolve(dirname(defaultConfigPath), expandHome(rawConfigFile.trim()))
+    : defaultConfigPath;
+  const fileConfig = loadJsonObjectFile(configFile, logger);
+  delete fileConfig.configFile;
+
+  return {
+    ...fileConfig,
+    ...mergedInlineConfig,
+  };
+}
+
 export function ensureDir(path: string): void {
   mkdirSync(path, { recursive: true });
 }

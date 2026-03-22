@@ -13,6 +13,9 @@
         "type": "boolean",
         "default": true
       },
+      "configFile": {
+        "type": "string"
+      },
       "logDir": {
         "type": "string",
         "default": "~/.openclaw/logs/openclaw-quality-hooks"

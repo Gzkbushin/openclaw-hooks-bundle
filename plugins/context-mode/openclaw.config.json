@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "dbPath": "~/.context-mode/db",
+  "maxContextSnapshots": 50,
+  "maxMemorySnapshots": 100,
+  "snapshotRetentionDays": 7
+}

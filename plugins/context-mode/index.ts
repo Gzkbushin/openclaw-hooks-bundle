@@ -3,7 +3,8 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
-import type { ResourceLimitsConfig } from "../openclaw-quality-hooks/hooks/shared.ts";
+import { fileURLToPath } from "node:url";
+import { resolvePluginConfig, type ResourceLimitsConfig } from "../openclaw-quality-hooks/hooks/shared.ts";
 import { redactSensitiveData } from "./sensitive-data-filter.ts";
 
 type AnyRecord = Record<string, unknown>;
@@ -657,6 +658,7 @@ const configSchema = {
   type: "object",
   properties: {
     enabled: { type: "boolean", default: true },
+    configFile: { type: "string" },
     dbPath: { type: "string", default: "~/.context-mode/db" },
     maxContextSnapshots: { type: "integer", default: DEFAULT_RESOURCE_LIMITS.maxContextSnapshots },
     maxMemorySnapshots: { type: "integer", default: DEFAULT_RESOURCE_LIMITS.maxMemorySnapshots },
@@ -679,7 +681,11 @@ export default {
       debug: (...args: unknown[]) => api.logger?.debug?.("[context-mode]", ...args),
     };
 
-    const config = (globalThis as { OPENCLAW_PLUGIN_CONFIG?: AnyRecord }).OPENCLAW_PLUGIN_CONFIG || {};
+    const config = resolvePluginConfig(
+      (globalThis as { OPENCLAW_PLUGIN_CONFIG?: AnyRecord }).OPENCLAW_PLUGIN_CONFIG,
+      fileURLToPath(new URL("./openclaw.config.json", import.meta.url)),
+      log
+    ) as AnyRecord;
     const enabled = config.enabled !== false;
     if (!enabled) {
       log.info?.("plugin disabled by config");

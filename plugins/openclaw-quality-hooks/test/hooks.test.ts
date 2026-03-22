@@ -155,3 +155,31 @@ test("plugin registers before_tool_call and after_tool_call handlers", () => {
   });
   assert.deepEqual(hooks.sort(), ["after_tool_call", "before_tool_call"]);
 });
+
+test("plugin loads config from file and inline config wins", () => {
+  const root = mkdtempSync(join(tmpdir(), "openclaw-quality-hooks-config-"));
+  const configFile = join(root, "quality.config.json");
+  writeFileSync(configFile, JSON.stringify({ enabled: false, logDir: join(root, "from-file") }));
+
+  const disabledHooks: string[] = [];
+  plugin.register({
+    pluginConfig: { configFile },
+    logger: {},
+    on(hookName) {
+      disabledHooks.push(hookName);
+    }
+  });
+  assert.deepEqual(disabledHooks, []);
+
+  const enabledHooks: string[] = [];
+  plugin.register({
+    pluginConfig: { configFile, enabled: true },
+    logger: {},
+    on(hookName) {
+      enabledHooks.push(hookName);
+    }
+  });
+  assert.deepEqual(enabledHooks.sort(), ["after_tool_call", "before_tool_call"]);
+
+  rmSync(root, { recursive: true, force: true });
+});

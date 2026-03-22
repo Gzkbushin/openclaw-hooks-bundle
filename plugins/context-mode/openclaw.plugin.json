@@ -10,6 +10,7 @@
     "type": "object",
     "properties": {
       "enabled": { "type": "boolean", "default": true },
+      "configFile": { "type": "string" },
       "dbPath": { "type": "string", "default": "~/.context-mode/db" },
       "maxContextSnapshots": { "type": "integer", "default": 50 },
       "maxMemorySnapshots": { "type": "integer", "default": 100 },
