@@ -1,0 +1,232 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-03-18T10:59:18.934Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-16T05:40:09.164Z",
+    "lastRunVersion": "2026.3.13",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "zai:default": {
+        "provider": "zai",
+        "mode": "api_key"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "zhipu": {
+        "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+        "apiKey": "f560897f8efb4555823e761382c7825c.nrGSqqhRcQtt7YZI",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "glm-4.7",
+            "name": "GLM-4.7",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+            "contextWindow": 200000,
+            "maxTokens": 16386
+          },
+          {
+            "id": "glm-4-air",
+            "name": "GLM-4 Air",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "glm-4.6v",
+            "name": "GLM-4.6V",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://127.0.0.1:11434/v1",
+        "apiKey": "ollama-local",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "kimi-k2.5:cloud",
+            "name": "kimi-k2.5:cloud",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+            "contextWindow": 131072,
+            "maxTokens": 16384
+          }
+        ]
+      },
+      "minimax-edgefn": {
+        "baseUrl": "https://api.edgefn.net/v1",
+        "apiKey": "sk-IYPGHP8MWxt57sTMEcFb6bD29e514f3fA7449d41041d75Ac",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "MiniMax-M2.5",
+            "name": "MiniMax-M2.5 (EdgeFn)",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+            "contextWindow": 128000,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {"primary": "zhipu/glm-4.7"},
+      "models": {"zhipu/glm-4.7": {}},
+      "workspace": "/root/.openclaw/workspace",
+      "bootstrapMaxChars": 12000,
+      "memorySearch": {"enabled": false},
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "5m",
+        "keepLastAssistants": 3,
+        "softTrim": {"maxChars": 50000, "headChars": 10000, "tailChars": 10000},
+        "hardClear": {"enabled": true, "placeholder": "[Old tool result content cleared]"}
+      },
+      "compaction": {
+        "mode": "safeguard",
+        "memoryFlush": {"enabled": true, "softThresholdTokens": 50000}
+      },
+      "maxConcurrent": 4,
+      "subagents": {"maxConcurrent": 8}
+    }
+  },
+  "tools": {"profile": "coding"},
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "session": {"dmScope": "per-channel-peer"},
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "session-memory": {"enabled": true},
+        "session-learning": {
+          "enabled": true,
+          "trigger": "on_message_interval",
+          "action": "call_skill",
+          "skill": "session-learning",
+          "condition": "meaningful_content",
+          "confirmation": "required",
+          "priority": "high",
+          "interval": 10
+        }
+      }
+    }
+  },
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "appId": "cli_a9f6dd8914e35cee",
+      "appSecret": "xfmQKrorineZ98YdQHQ1YeYby1GDFSbM",
+      "domain": "feishu",
+      "connectionMode": "websocket",
+      "requireMention": true,
+      "dmPolicy": "open",
+      "allowFrom": ["*"],
+      "groupPolicy": "open",
+      "groups": {
+        "*": {
+          "enabled": true,
+          "requireMention": true
+        }
+      },
+      "streaming": true,
+      "footer": {"status": true, "elapsed": true}
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {"mode": "token", "token": "d2beddd2fd01bf1ca9d58997fc601a4e3a227dba0acfd36e"},
+    "tailscale": {"mode": "off", "resetOnExit": false},
+    "nodes": {
+      "denyCommands": ["camera.snap", "camera.clip", "screen.record", "contacts.add", "calendar.add", "reminders.add", "sms.send"]
+    }
+  },
+  "plugins": {
+    "allow": ["openclaw-lark", "context-mode", "openclaw-security-guard", "openclaw-quality-hooks"],
+    "load": {
+      "paths": ["/root/workspace/openclaw-security-guard"]
+    },
+    "slots": {"memory": "openclaw-mem0-plugin"},
+    "entries": {
+      "kimi-claw": {
+        "enabled": true,
+        "config": {"bridge": {"token": "sk-CKLBGXQP2QOMCENJGHCQJWNAEE", "promptTimeoutMs": 1800000}}
+      },
+      "openclaw-mem0-plugin": {
+        "enabled": true,
+        "config": {
+          "mode": "platform",
+          "apiKey": "7c2fc932-a1b6-5b56-8c7d-d0296c3d172b",
+          "host": "https://mem0-cnlfjzigaku8gczkzo.mem0.volces.com:8000",
+          "userId": "Neoshin",
+          "autoRecall": true,
+          "autoCapture": true
+        }
+      },
+      "memory-core": {"enabled": false},
+      "memory-lancedb": {"enabled": false},
+      "feishu": {"enabled": false},
+      "openclaw-lark": {"enabled": true},
+      "context-mode": {
+        "enabled": true,
+        "config": {"enabled": true, "dbPath": "~/.context-mode/db"}
+      },
+      "openclaw-quality-hooks": {
+        "enabled": true,
+        "config": {
+          "enabled": true,
+          "logDir": "~/.openclaw/logs/openclaw-quality-hooks"
+        }
+      },
+      "openclaw-security-guard": {
+        "enabled": true,
+        "config": {
+          "database_path": "/root/.openclaw/security-guard.db",
+          "log_level": "info",
+          "auto_fix": false,
+          "approval_required": true
+        }
+      }
+    },
+    "installs": {
+      "openclaw-mem0-plugin": {
+        "source": "npm",
+        "spec": "@xray2016/openclaw-mem0-plugin",
+        "installPath": "/root/.openclaw/extensions/openclaw-mem0-plugin",
+        "version": "1.0.9"
+      },
+      "openclaw-lark": {
+        "source": "npm",
+        "spec": "@larksuite/openclaw-lark",
+        "installPath": "/root/.openclaw/extensions/openclaw-lark",
+        "version": "2026.3.17"
+      }
+    }
+  }
+}

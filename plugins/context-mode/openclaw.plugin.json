@@ -1,0 +1,23 @@
+{
+  "id": "context-mode",
+  "name": "Context Mode",
+  "version": "1.0.0",
+  "description": "Privacy-first context optimization for OpenClaw",
+  "author": "mksglu",
+  "license": "Elastic License 2.0",
+  "homepage": "https://github.com/mksglu/context-mode",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "enabled": { "type": "boolean", "default": true },
+      "dbPath": { "type": "string", "default": "~/.context-mode/db" }
+    }
+  },
+  "capabilities": [],
+  "hooks": [
+    "after_tool_call",
+    "before_compaction",
+    "session_start"
+  ],
+  "tools": []
+}

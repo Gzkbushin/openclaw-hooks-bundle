@@ -1,0 +1,15 @@
+{
+  "name": "context-mode-openclaw",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenClaw native plugin for context-mode session tracking and compaction recovery",
+  "license": "Elastic-2.0",
+  "main": "./index.ts",
+  "scripts": {
+    "check": "node ./test/smoke.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2"
+  }
+}

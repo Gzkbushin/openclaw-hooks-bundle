@@ -1,0 +1,16 @@
+{
+  "name": "openclaw-quality-hooks",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ECC-style quality and safety hooks for OpenClaw",
+  "main": "./index.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

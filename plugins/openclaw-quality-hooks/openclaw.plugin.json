@@ -1,0 +1,27 @@
+{
+  "id": "openclaw-quality-hooks",
+  "name": "OpenClaw Quality Hooks",
+  "version": "1.0.0",
+  "description": "ECC-style safety, formatting, reminder, and quality-gate hooks",
+  "author": "Codex",
+  "license": "MIT",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "logDir": {
+        "type": "string",
+        "default": "~/.openclaw/logs/openclaw-quality-hooks"
+      }
+    }
+  },
+  "hooks": [
+    "before_tool_call",
+    "after_tool_call"
+  ],
+  "tools": []
+}

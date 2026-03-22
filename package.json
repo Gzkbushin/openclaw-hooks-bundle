@@ -1,0 +1,30 @@
+{
+  "name": "openclaw-hooks-bundle",
+  "version": "1.0.0",
+  "description": "一套高质量的 OpenClaw Hooks，提升代码质量、安全性和开发体验",
+  "main": "README.md",
+  "scripts": {
+    "install": "./install.sh",
+    "uninstall": "./UNINSTALL.sh",
+    "test": "cd plugins/openclaw-quality-hooks && npm test"
+  },
+  "keywords": [
+    "openclaw",
+    "hooks",
+    "quality",
+    "context",
+    "security",
+    "formatter",
+    "console-log"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/openclaw-hooks-bundle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/openclaw-hooks-bundle/issues"
+  },
+  "homepage": "https://github.com/your-username/openclaw-hooks-bundle#readme"
+}
