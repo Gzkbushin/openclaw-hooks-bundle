@@ -41,6 +41,10 @@ Plugin hooks:
 rm -rf /tmp/test
 # 输出: Blocked dangerous command: `rm -rf` requires `approved: true`.
 
+# 查看审计日志
+cd plugins/openclaw-quality-hooks
+npm run audit:query -- --type dangerous_command_blocked --limit 5
+
 # 测试 Console.log Audit
 echo "console.log('test');" > /tmp/test.js
 # 输出: [Hook] ⚠️ Console.log detected in test.js

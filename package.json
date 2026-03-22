@@ -6,7 +6,8 @@
   "scripts": {
     "install": "./install.sh",
     "uninstall": "./UNINSTALL.sh",
-    "test": "cd plugins/openclaw-quality-hooks && npm test"
+    "test": "cd plugins/openclaw-quality-hooks && npm test",
+    "lint": "cd plugins/openclaw-quality-hooks && npm run lint"
   },
   "keywords": [
     "openclaw",

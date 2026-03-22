@@ -5,6 +5,7 @@ import { runDangerBlocker } from "./hooks/danger-blocker.ts";
 import { scheduleQualityGate } from "./hooks/quality-gate.ts";
 import { runSmartReminder } from "./hooks/smart-reminder.ts";
 import { expandHome, normalizeToolName, resolvePluginConfig, type Logger, withSafeErrorHandling } from "./hooks/shared.ts";
+import type { AuditLoggerConfig } from "./hooks/audit-logger.ts";
 
 type PluginApi = {
   pluginConfig?: Record<string, unknown>;
@@ -16,6 +17,7 @@ type PluginConfig = {
   enabled?: boolean;
   configFile?: string;
   logDir?: string;
+  audit?: AuditLoggerConfig;
 };
 
 export const plugin = {
@@ -43,7 +45,11 @@ export const plugin = {
           toolName: normalizeToolName(event.toolName),
           params: event.params || {}
         };
-        const blocked = withSafeErrorHandling("DangerBlocker", () => runDangerBlocker(normalizedEvent), api.logger);
+        const blocked = withSafeErrorHandling(
+          "DangerBlocker",
+          () => runDangerBlocker(normalizedEvent, api.logger, logDir, config.audit, ctx || {}),
+          api.logger
+        );
         if (blocked?.block) return blocked;
         withSafeErrorHandling("SmartReminder", () => {
           runSmartReminder(normalizedEvent, ctx || {}, api.logger, logDir);

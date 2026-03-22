@@ -1,5 +1,14 @@
 # 更新日志
 
+## [Unreleased]
+
+### 新增
+- ✅ Danger Blocker 审计日志
+  - JSONL 审计事件输出，带时间戳
+  - 默认写入 `audit.log.jsonl`
+  - 按文件大小轮转并保留历史文件
+  - 提供 `npm run audit:query` 查询工具
+
 ## [1.0.0] - 2026-03-22
 
 ### 新增

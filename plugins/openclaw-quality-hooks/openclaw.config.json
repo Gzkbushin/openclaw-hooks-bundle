@@ -1,4 +1,10 @@
 {
   "enabled": true,
-  "logDir": "~/.openclaw/logs/openclaw-quality-hooks"
+  "logDir": "~/.openclaw/logs/openclaw-quality-hooks",
+  "audit": {
+    "enabled": true,
+    "fileName": "audit.log.jsonl",
+    "maxBytes": 1048576,
+    "maxFiles": 5
+  }
 }

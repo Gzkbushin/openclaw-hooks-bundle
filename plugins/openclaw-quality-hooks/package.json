@@ -6,7 +6,9 @@
   "description": "ECC-style quality and safety hooks for OpenClaw",
   "main": "./index.ts",
   "scripts": {
-    "test": "node --experimental-strip-types --test test/*.test.ts"
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "lint": "node --experimental-strip-types scripts/lint.ts",
+    "audit:query": "node --experimental-strip-types scripts/query-audit-log.ts"
   },
   "openclaw": {
     "extensions": [

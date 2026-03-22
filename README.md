@@ -132,6 +132,8 @@ $ rm -rf /important/data
 ❌ Blocked dangerous command: `rm -rf` requires `approved: true`
 ```
 
+危险操作会写入 `~/.openclaw/logs/openclaw-quality-hooks/audit.log.jsonl`，默认按 1MB 大小轮转并保留 5 个文件。
+
 ### 3. 自动格式化 | Auto Formatting
 
 ```bash
@@ -210,6 +212,23 @@ If this project helps you, please give it a Star ⭐
 阻止危险命令执行 | Block dangerous commands
 - `rm -rf` - 防止误删除 | Prevent accidental deletion
 - `--no-verify` - 防止跳过检查 | Prevent skipping checks
+- 审计日志 - JSONL + 时间戳，默认记录到 `audit.log.jsonl`
+- 日志轮转 - 按文件大小轮转，默认保留 5 个文件
+
+#### 审计日志查询 | Audit Log Query
+查询最近的安全事件 | Query recent security events
+
+```bash
+cd plugins/openclaw-quality-hooks
+npm run audit:query -- --type dangerous_command_blocked --limit 10
+```
+
+可选参数：
+- `--log-dir` - 指定日志目录
+- `--type` - 过滤事件类型
+- `--action` - 过滤 `blocked` / `allowed` / `observed`
+- `--since` - 只返回指定时间后的事件
+- `--limit` - 限制返回条数
 
 #### Auto Formatter 🎨
 自动格式化代码 | Auto format code
