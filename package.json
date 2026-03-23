@@ -1,15 +1,18 @@
 {
   "name": "openclaw-hooks-bundle",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "一套高质量的 OpenClaw Hooks，提升代码质量、安全性和开发体验",
   "main": "README.md",
   "scripts": {
     "install": "./install.sh",
     "uninstall": "./UNINSTALL.sh",
-    "test": "npm --prefix plugins/openclaw-quality-hooks test && npm --prefix plugins/context-mode test",
+    "test": "npm --prefix plugins/openclaw-quality-hooks test && npm --prefix plugins/context-mode test && npm run smoke",
     "coverage": "node --experimental-strip-types --experimental-test-coverage --test --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test-coverage-include='plugins/**/*.ts' --test-coverage-exclude='**/test/**' plugins/openclaw-quality-hooks/test/*.test.ts plugins/context-mode/test/*.test.ts && npm --prefix plugins/context-mode run smoke",
     "lint": "npm --prefix plugins/openclaw-quality-hooks run lint && npm --prefix plugins/context-mode run lint",
-    "check": "npm run coverage && npm run lint"
+    "smoke": "bash ./test/install-lifecycle-smoke.sh && node --test test/release-layout.test.mjs",
+    "smoke:install": "bash ./test/install-lifecycle-smoke.sh",
+    "smoke:release": "node --test test/release-layout.test.mjs",
+    "check": "npm run coverage && npm run lint && npm run smoke"
   },
   "keywords": [
     "openclaw",
@@ -20,14 +23,14 @@
     "formatter",
     "console-log"
   ],
-  "author": "Your Name",
-  "license": "MIT",
+  "author": "OpenClaw Hooks Bundle Contributors",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/openclaw-hooks-bundle.git"
+    "url": "https://github.com/Gzkbushin/openclaw-hooks-bundle.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/openclaw-hooks-bundle/issues"
+    "url": "https://github.com/Gzkbushin/openclaw-hooks-bundle/issues"
   },
-  "homepage": "https://github.com/your-username/openclaw-hooks-bundle#readme"
+  "homepage": "https://github.com/Gzkbushin/openclaw-hooks-bundle#readme"
 }

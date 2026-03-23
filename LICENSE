@@ -1,3 +1,9 @@
+OpenClaw Hooks Bundle 包含多种许可证的内容。
+
+- 仓库级脚本、文档以及 `plugins/openclaw-quality-hooks` 按下方 MIT License 提供。
+- `plugins/context-mode` 保留其 `Elastic License 2.0` 元数据，请以该插件目录内的元数据声明为准。
+- 重新分发整个 bundle 时，应同时保留本文件和各插件 manifest 中的许可证信息。
+
 MIT License
 
 Copyright (c) 2026 OpenClaw Hooks Bundle Contributors

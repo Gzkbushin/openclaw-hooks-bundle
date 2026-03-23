@@ -42,7 +42,7 @@ const pluginConfigSchema = {
 export const plugin = {
   id: "openclaw-quality-hooks",
   name: "OpenClaw Quality Hooks",
-  version: "1.0.0",
+  version: "1.1.0",
   description: "ECC-style safety, reminders, formatting, and quality-gate hooks",
   register(api: PluginApi) {
     const config = resolvePluginConfig(

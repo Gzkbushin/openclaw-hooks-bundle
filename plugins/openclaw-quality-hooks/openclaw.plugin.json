@@ -1,9 +1,9 @@
 {
   "id": "openclaw-quality-hooks",
   "name": "OpenClaw Quality Hooks",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ECC-style safety, formatting, reminder, and quality-gate hooks",
-  "author": "Codex",
+  "author": "OpenClaw Hooks Bundle Contributors",
   "license": "MIT",
   "configSchema": {
     "type": "object",
@@ -19,6 +19,30 @@
       "logDir": {
         "type": "string",
         "default": "~/.openclaw/logs/openclaw-quality-hooks"
+      },
+      "audit": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "logDir": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string",
+            "default": "audit.log.jsonl"
+          },
+          "maxBytes": {
+            "type": "integer",
+            "default": 1048576
+          },
+          "maxFiles": {
+            "type": "integer",
+            "default": 5
+          }
+        }
       }
     }
   },

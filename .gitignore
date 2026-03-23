@@ -1,0 +1,11 @@
+node_modules/
+plugins/**/node_modules/
+coverage/
+.nyc_output/
+*.log
+*.log.*
+*.staged
+*.backup*
+*.db
+*.db-shm
+*.db-wal
