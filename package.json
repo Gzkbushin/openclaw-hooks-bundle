@@ -1,14 +1,14 @@
 {
   "name": "openclaw-hooks-bundle",
-  "version": "1.1.0",
-  "description": "一套高质量的 OpenClaw Hooks，提升代码质量、安全性和开发体验",
+  "version": "2.0.0",
+  "description": "一套高质量的 OpenClaw Hooks，含声明式规则引擎、代码质量、安全性和上下文管理",
   "main": "README.md",
   "scripts": {
     "install": "./install.sh",
     "uninstall": "./UNINSTALL.sh",
-    "test": "npm --prefix plugins/openclaw-quality-hooks test && npm --prefix plugins/context-mode test && npm run smoke",
-    "coverage": "node --experimental-strip-types --experimental-test-coverage --test --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test-coverage-include='plugins/**/*.ts' --test-coverage-exclude='**/test/**' plugins/openclaw-quality-hooks/test/*.test.ts plugins/context-mode/test/*.test.ts && npm --prefix plugins/context-mode run smoke",
-    "lint": "npm --prefix plugins/openclaw-quality-hooks run lint && npm --prefix plugins/context-mode run lint",
+    "test": "npm --prefix plugins/hookify-engine test && npm --prefix plugins/openclaw-quality-hooks test && npm --prefix plugins/context-mode test && npm run smoke",
+    "coverage": "node --experimental-strip-types --experimental-test-coverage --test --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test-coverage-include='plugins/**/*.ts' --test-coverage-exclude='**/test/**' plugins/hookify-engine/test/*.test.ts plugins/openclaw-quality-hooks/test/*.test.ts plugins/context-mode/test/*.test.ts && npm --prefix plugins/context-mode run smoke",
+    "lint": "npm --prefix plugins/hookify-engine run lint && npm --prefix plugins/openclaw-quality-hooks run lint && npm --prefix plugins/context-mode run lint",
     "smoke": "bash ./test/install-lifecycle-smoke.sh && node --test test/release-layout.test.mjs",
     "smoke:install": "bash ./test/install-lifecycle-smoke.sh",
     "smoke:release": "node --test test/release-layout.test.mjs",
@@ -21,7 +21,9 @@
     "context",
     "security",
     "formatter",
-    "console-log"
+    "rules",
+    "hookify",
+    "declarative"
   ],
   "author": "OpenClaw Hooks Bundle Contributors",
   "license": "SEE LICENSE IN LICENSE",

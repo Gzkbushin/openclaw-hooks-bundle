@@ -15,11 +15,13 @@ fi
 BACKUP_DIR="$HOME/.openclaw/extensions/backups/uninstall-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
+[ -d "$HOME/.openclaw/extensions/hookify-engine" ] && cp -r "$HOME/.openclaw/extensions/hookify-engine" "$BACKUP_DIR/"
 [ -d "$HOME/.openclaw/extensions/openclaw-quality-hooks" ] && cp -r "$HOME/.openclaw/extensions/openclaw-quality-hooks" "$BACKUP_DIR/"
 [ -d "$HOME/.openclaw/extensions/context-mode" ] && cp -r "$HOME/.openclaw/extensions/context-mode" "$BACKUP_DIR/"
 [ -f "$HOME/.openclaw/openclaw.json" ] && cp "$HOME/.openclaw/openclaw.json" "$BACKUP_DIR/openclaw.json.pre-uninstall"
 
 # 删除
+rm -rf "$HOME/.openclaw/extensions/hookify-engine"
 rm -rf "$HOME/.openclaw/extensions/openclaw-quality-hooks"
 rm -rf "$HOME/.openclaw/extensions/context-mode"
 

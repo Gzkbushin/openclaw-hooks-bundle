@@ -1,6 +1,12 @@
 # Project-level settings override user-level settings.
 # User-level settings live at ~/.openclaw-hooks.config.yaml.
 
+hookifyEngine:
+  enabled: true
+  rulesDir: ~/.openclaw/rules
+  cacheSize: 256
+  watchInterval: 3000
+
 qualityHooks:
   enabled: true
   logDir: ~/.openclaw/logs/openclaw-quality-hooks

@@ -22,6 +22,11 @@ const backupDir = process.env.OPENCLAW_HOOKS_BACKUP_DIR || join(extensionsDir, "
 
 const PLUGINS = [
   {
+    id: "hookify-engine",
+    path: join(extensionsDir, "hookify-engine"),
+    configFile: join(extensionsDir, "hookify-engine", "openclaw.config.json"),
+  },
+  {
     id: "openclaw-quality-hooks",
     path: join(extensionsDir, "openclaw-quality-hooks"),
     configFile: join(extensionsDir, "openclaw-quality-hooks", "openclaw.config.json"),

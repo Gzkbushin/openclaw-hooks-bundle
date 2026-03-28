@@ -1,83 +1,49 @@
-# v1.1.0
+# Changelog
 
-发布日期：`2026-03-22`
+All notable changes to this project will be documented in this file.
 
-## 概览
+## [2.0.0] - 2026-03-28
 
-`v1.1.0` 聚焦安全、配置和上下文管理能力，并补齐了测试与运行时保护。
+### Added
+- **hookify-engine**: New declarative markdown-based rule engine plugin
+  - YAML frontmatter rule definitions with hot-reload
+  - 10 built-in default rules (dangerous commands, debug code, sensitive files, etc.)
+  - Rule engine with LRU regex caching (256 entries)
+  - Support for 8 condition operators (regex_match, contains, equals, not_contains, starts_with, ends_with, glob_match, not_regex_match)
+  - Priority-based rule evaluation (0-1000)
+  - Severity levels (error, warning, info)
+  - Actions: warn, block, log, allow
+  - Zero external dependencies
+- `install.sh` now creates `~/.openclaw/rules/` directory and installs built-in rules
+- Built-in rules are only installed when the rules directory is empty (preserves user customizations)
+- `UNINSTALL.sh` now also removes hookify-engine plugin
 
-## 主要变更
+### Changed
+- **openclaw-quality-hooks** now delegates rule evaluation to hookify-engine when available
+- `danger-blocker` and `console-log-audit` are now powered by declarative rules via hookify-engine
+- Built-in hooks maintained as automatic fallback when hookify-engine is unavailable
+- `scripts/manage-openclaw-config.mjs` now registers hookify-engine in the plugins configuration
+- Plugin version bumped to 2.0.0 across all affected files
 
-### openclaw-quality-hooks
+### Deprecated
+- `danger-blocker.ts` direct usage — use hookify-engine rules instead (retained for backward compatibility)
+- `console-log-audit.ts` direct usage — use hookify-engine rules instead (retained for backward compatibility)
 
-- 新增危险命令拦截与审计日志记录
-- 新增智能提醒、自动格式化和后台质量检查模块
-- 新增分层配置加载与基础 schema 校验
-- 所有 hook 通过安全包装隔离错误，避免单点失败影响整体运行
+### Security
+- All hookify-engine rule evaluation is wrapped in safe error handling to prevent single rule failures from affecting overall plugin operation
 
-### context-mode
+---
 
-- 新增工具调用事件持久化
-- 新增会话快照构建与恢复
-- 新增 FTS5 + BM25 检索辅助压缩
-- 新增敏感信息脱敏与资源清理策略
+## [1.1.0] - 2026-03-22
 
-## 配置
+### Added
+- Dangerous command interception and audit logging
+- Smart reminders, auto-formatting, and background quality checking
+- Layered configuration loading with basic schema validation
+- All hooks isolated with safe error handling to prevent single-point failures
 
-当前支持的顶级配置如下：
-
-```yaml
-qualityHooks:
-  enabled: true
-  logDir: ~/.openclaw/logs/openclaw-quality-hooks
-  audit:
-    enabled: true
-    fileName: audit.log.jsonl
-    maxBytes: 1048576
-    maxFiles: 5
-
-contextMode:
-  enabled: true
-  dbPath: ~/.context-mode/db
-  maxContextSnapshots: 50
-  maxMemorySnapshots: 100
-  snapshotRetentionDays: 7
-```
-
-## 安装与升级
-
-全新安装或从旧版本升级，均建议重新执行安装脚本：
-
-```bash
-git clone https://github.com/Gzkbushin/openclaw-hooks-bundle.git
-cd openclaw-hooks-bundle
-./install.sh
-```
-
-如果是在源码仓库内做本地开发，请先安装 `context-mode` 的本地依赖：
-
-```bash
-npm --prefix plugins/context-mode install
-```
-
-## 安装链路
-
-- 安装脚本现在显式使用 `npm ci --omit=dev` 安装 `context-mode` 运行时依赖
-- 安装和卸载都会备份已有插件与 `openclaw.json`
-- 遇到损坏的 `openclaw.json` 时会自动备份并恢复
-- 新增安装生命周期和发布布局 smoke test
-
-## 验证
-
-当前仓库使用以下命令做基础验证：
-
-```bash
-npm test
-npm run lint
-npm run coverage
-```
-
-## 支持
-
-- Issues：https://github.com/Gzkbushin/openclaw-hooks-bundle/issues
-- Discussions：https://github.com/Gzkbushin/openclaw-hooks-bundle/discussions
+### Added — context-mode
+- Tool call event persistence
+- Session snapshot construction and restoration
+- FTS5 + BM25 retrieval for compression assistance
+- Sensitive data masking and resource cleanup policies
