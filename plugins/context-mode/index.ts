@@ -7,6 +7,14 @@ import { fileURLToPath } from "node:url";
 import { resolvePluginConfig, type ResourceLimitsConfig } from "../openclaw-quality-hooks/hooks/shared.ts";
 import { redactSensitiveData } from "./sensitive-data-filter.ts";
 
+let definePluginEntry: <T>(def: T) => T;
+try {
+  const mod = await import("openclaw/plugin-sdk/plugin-entry");
+  definePluginEntry = (mod as { definePluginEntry: typeof definePluginEntry }).definePluginEntry;
+} catch {
+  definePluginEntry = <T>(def: T) => def;
+}
+
 type AnyRecord = Record<string, unknown>;
 
 type Logger = {
@@ -681,7 +689,7 @@ const configSchema = {
   },
 } as const;
 
-export default {
+const pluginEntry = definePluginEntry({
   id: "context-mode",
   name: "Context Mode",
   version: "1.1.0",
@@ -843,4 +851,7 @@ export default {
       resourceLimits,
     });
   },
-};
+});
+
+export const plugin = pluginEntry;
+export default pluginEntry;

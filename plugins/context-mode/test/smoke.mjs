@@ -19,6 +19,9 @@ for (const hook of ["after_tool_call", "before_compaction", "session_start"]) {
 }
 
 assert(indexTs.includes("better-sqlite3"), "better-sqlite3 not used");
+assert(indexTs.includes("openclaw/plugin-sdk/plugin-entry"), "definePluginEntry SDK import missing");
+assert(indexTs.includes("const pluginEntry = definePluginEntry({"), "plugin entry wrapper missing");
+assert(indexTs.includes("definePluginEntry = <T>(def: T) => def;"), "definePluginEntry fallback missing");
 assert(indexTs.includes("CREATE VIRTUAL TABLE IF NOT EXISTS session_events_fts USING fts5"), "FTS5 schema missing");
 assert(indexTs.includes("bm25(session_events_fts"), "BM25 query missing");
 assert(indexTs.includes("buildSnapshot(events, related, 2048)"), "2KB snapshot budget missing");
@@ -30,5 +33,7 @@ for (const key of ["maxContextSnapshots", "maxMemorySnapshots", "snapshotRetenti
 }
 assert(indexTs.includes("cleanupResources"), "resource cleanup logic missing");
 assert(indexTs.includes("resource stats"), "resource stats logging missing");
+assert(indexTs.includes("export const plugin = pluginEntry;"), "named plugin export missing");
+assert(indexTs.includes("export default pluginEntry;"), "default plugin export missing");
 
 console.log("smoke test passed");
