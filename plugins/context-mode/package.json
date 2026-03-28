@@ -12,6 +12,11 @@
     "lint": "node --experimental-strip-types -e \"await import('./index.ts'); await import('./sensitive-data-filter.ts');\" && node --check test/smoke.mjs",
     "check": "npm run test && npm run lint"
   },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
   "dependencies": {
     "better-sqlite3": "^12.6.2"
   }

@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(readFileSync(resolve(root, "openclaw.plugin.json"), "utf8"));
+const packageJson = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 const indexTs = readFileSync(resolve(root, "index.ts"), "utf8");
 
 function assert(condition, message) {
@@ -12,6 +13,10 @@ function assert(condition, message) {
 }
 
 assert(manifest.id === "context-mode", "manifest.id mismatch");
+assert(
+  JSON.stringify(packageJson.openclaw?.extensions) === JSON.stringify(["./index.ts"]),
+  "package.json openclaw.extensions mismatch",
+);
 for (const field of ["author", "license", "homepage", "capabilities", "hooks", "tools"]) {
   assert(!(field in manifest), `manifest should not include ${field}`);
 }
