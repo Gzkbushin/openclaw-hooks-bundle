@@ -1,33 +1,12 @@
 import { mapBeforeToolCallToInput } from "../event-mapper.ts";
 import { loadRules } from "../rule-loader.ts";
 import { evaluateRules } from "../rule-engine.ts";
-
-// Inline types to avoid coupling to openclaw-quality-hooks at runtime
-// (shared.ts is only used for type information in the parent plugin)
-type BeforeToolEvent = {
-  toolName: string;
-  params: Record<string, unknown>;
-};
-
-type BeforeToolResult = {
-  block?: boolean;
-  blockReason?: string;
-  params?: Record<string, unknown>;
-};
-
-type Logger = {
-  info?: (...args: unknown[]) => void;
-  warn?: (...args: unknown[]) => void;
-  error?: (...args: unknown[]) => void;
-  debug?: (...args: unknown[]) => void;
-};
-
-type ToolContext = {
-  sessionId?: string;
-  sessionKey?: string;
-  runId?: string;
-  toolName?: string;
-};
+import type {
+  BeforeToolEvent,
+  BeforeToolResult,
+  Logger,
+  ToolContext
+} from "../shared.ts";
 
 /**
  * before_tool_call hook for hookify-engine.

@@ -9,6 +9,24 @@ export type Logger = {
   debug?: (...args: unknown[]) => void;
 };
 
+export type BeforeToolEvent = {
+  toolName: string;
+  params: Record<string, unknown>;
+};
+
+export type BeforeToolResult = {
+  block?: boolean;
+  blockReason?: string;
+  params?: Record<string, unknown>;
+};
+
+export type ToolContext = {
+  sessionId?: string;
+  sessionKey?: string;
+  runId?: string;
+  toolName?: string;
+};
+
 type ConfigPrimitiveType = "boolean" | "string" | "integer" | "object";
 
 type ConfigPropertySchema = {

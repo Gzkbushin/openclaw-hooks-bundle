@@ -13,3 +13,14 @@ test("plugin entry imports shared helpers from the local module", () => {
     /\.\.\/openclaw-quality-hooks\/hooks\/shared\.ts/
   );
 });
+
+test("before_tool_call hook imports hook types from the local shared module", () => {
+  const hookPath = fileURLToPath(new URL("../src/hooks/before-tool-call.ts", import.meta.url));
+  const hookSource = readFileSync(hookPath, "utf8");
+
+  assert.match(hookSource, /from "\.\.\/shared\.ts"/);
+  assert.doesNotMatch(
+    hookSource,
+    /\.\.\/\.\.\/openclaw-quality-hooks\/hooks\/shared\.ts/
+  );
+});
