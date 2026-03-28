@@ -14,6 +14,14 @@ export type BeforeToolEvent = {
   params: Record<string, unknown>;
 };
 
+export type AfterToolEvent = {
+  toolName: string;
+  params: Record<string, unknown>;
+  result?: unknown;
+  error?: string;
+  durationMs?: number;
+};
+
 export type BeforeToolResult = {
   block?: boolean;
   blockReason?: string;

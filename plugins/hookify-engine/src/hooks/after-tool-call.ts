@@ -1,29 +1,7 @@
 import { mapAfterToolCallToInput } from "../event-mapper.ts";
 import { loadRules } from "../rule-loader.ts";
 import { evaluateRules } from "../rule-engine.ts";
-
-// Inline types to avoid coupling to openclaw-quality-hooks at runtime
-type AfterToolEvent = {
-  toolName: string;
-  params: Record<string, unknown>;
-  result?: unknown;
-  error?: string;
-  durationMs?: number;
-};
-
-type Logger = {
-  info?: (...args: unknown[]) => void;
-  warn?: (...args: unknown[]) => void;
-  error?: (...args: unknown[]) => void;
-  debug?: (...args: unknown[]) => void;
-};
-
-type ToolContext = {
-  sessionId?: string;
-  sessionKey?: string;
-  runId?: string;
-  toolName?: string;
-};
+import type { AfterToolEvent, Logger, ToolContext } from "../shared.ts";
 
 /**
  * after_tool_call hook for hookify-engine.
