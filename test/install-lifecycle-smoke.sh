@@ -62,25 +62,32 @@ run_install_cycle() {
   local config_path="$home_dir/.openclaw/openclaw.json"
   local extensions_dir="$home_dir/.openclaw/extensions"
   local backup_dir="$extensions_dir/backups"
+  local rules_dir="$home_dir/.openclaw/rules"
   mkdir -p "$home_dir/.openclaw"
   printf '{broken-json' > "$config_path"
 
   HOME="$home_dir" PATH="$root/bin:$PATH" bash "$ROOT_DIR/install.sh" >/dev/null
 
   assert_json "$config_path" '
-    assert.deepEqual(data.plugins.allow.sort(), ["context-mode", "openclaw-quality-hooks"]);
+    assert.deepEqual(data.plugins.allow.sort(), ["context-mode", "hookify-engine", "openclaw-quality-hooks"]);
+    assert.equal(data.plugins.entries["hookify-engine"].enabled, true);
     assert.equal(data.plugins.entries["context-mode"].enabled, true);
     assert.equal(data.plugins.entries["openclaw-quality-hooks"].enabled, true);
   '
 
+  test -f "$extensions_dir/hookify-engine/openclaw.plugin.json"
   test -f "$extensions_dir/context-mode/node_modules/.smoke-installed"
+  test -f "$rules_dir/block-dangerous-rm.md"
   grep -Eq '(^| )ci( |$)' "$root/npm.log"
   grep -Eq -- '--omit=dev' "$root/npm.log"
   find "$backup_dir" -type f | grep -q 'openclaw.invalid.'
 
+  printf '# custom\n' > "$rules_dir/custom-rule.md"
   printf 'old\n' > "$extensions_dir/openclaw-quality-hooks/upgrade-marker.txt"
   HOME="$home_dir" PATH="$root/bin:$PATH" bash "$ROOT_DIR/install.sh" >/dev/null
   test ! -f "$extensions_dir/openclaw-quality-hooks/upgrade-marker.txt"
+  test -f "$rules_dir/custom-rule.md"
+  find "$backup_dir" -type f | grep -q 'hookify-engine'
   find "$backup_dir" -type f | grep -q 'openclaw-quality-hooks'
 
   node --input-type=module - "$config_path" <<'NODE'
@@ -97,6 +104,7 @@ NODE
 
   HOME="$home_dir" PATH="$root/bin:$PATH" bash "$ROOT_DIR/UNINSTALL.sh" >/dev/null
 
+  test ! -d "$extensions_dir/hookify-engine"
   test ! -d "$extensions_dir/openclaw-quality-hooks"
   test ! -d "$extensions_dir/context-mode"
 
@@ -114,12 +122,13 @@ run_invalid_uninstall_cycle() {
   local extensions_dir="$home_dir/.openclaw/extensions"
   local config_path="$home_dir/.openclaw/openclaw.json"
   local backup_dir="$extensions_dir/backups"
-  mkdir -p "$extensions_dir/openclaw-quality-hooks" "$extensions_dir/context-mode"
+  mkdir -p "$extensions_dir/hookify-engine" "$extensions_dir/openclaw-quality-hooks" "$extensions_dir/context-mode"
   mkdir -p "$(dirname "$config_path")"
   printf '[1,2,3]\n' > "$config_path"
 
   HOME="$home_dir" PATH="$root/bin:$PATH" bash "$ROOT_DIR/UNINSTALL.sh" >/dev/null
 
+  test ! -d "$extensions_dir/hookify-engine"
   test ! -d "$extensions_dir/openclaw-quality-hooks"
   test ! -d "$extensions_dir/context-mode"
   find "$backup_dir" -type f | grep -q 'openclaw.invalid.'

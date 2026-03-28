@@ -12,18 +12,21 @@ function readJson(relativePath) {
 
 test("release metadata stays aligned", () => {
   const rootPackage = readJson("package.json");
+  const hookifyPackage = readJson("plugins/hookify-engine/package.json");
+  const hookifyManifest = readJson("plugins/hookify-engine/openclaw.plugin.json");
   const qualityPackage = readJson("plugins/openclaw-quality-hooks/package.json");
   const qualityManifest = readJson("plugins/openclaw-quality-hooks/openclaw.plugin.json");
   const contextPackage = readJson("plugins/context-mode/package.json");
   const contextManifest = readJson("plugins/context-mode/openclaw.plugin.json");
   const changelog = readFileSync(resolve(repoRoot, "CHANGELOG.md"), "utf8");
 
-  assert.equal(rootPackage.version, "1.1.0");
+  assert.equal(rootPackage.version, "2.0.0");
+  assert.equal(rootPackage.version, hookifyPackage.version);
+  assert.equal(rootPackage.version, hookifyManifest.version);
   assert.equal(rootPackage.version, qualityPackage.version);
   assert.equal(rootPackage.version, qualityManifest.version);
-  assert.equal(rootPackage.version, contextPackage.version);
-  assert.equal(rootPackage.version, contextManifest.version);
-  assert.match(changelog, /^# v1\.1\.0/m);
+  assert.equal(contextPackage.version, contextManifest.version);
+  assert.ok(changelog.includes(`## [${rootPackage.version}] - `));
 });
 
 test("release bundle includes required scripts and explicit install strategy", () => {
@@ -32,6 +35,8 @@ test("release bundle includes required scripts and explicit install strategy", (
     "UNINSTALL.sh",
     "scripts/manage-openclaw-config.mjs",
     "openclaw-hooks.config.yaml.example",
+    "plugins/hookify-engine/openclaw.plugin.json",
+    "plugins/hookify-engine/src/rules/block-dangerous-rm.md",
     "plugins/context-mode/package-lock.json",
   ]) {
     assert.ok(existsSync(resolve(repoRoot, relativePath)), `${relativePath} must exist`);
@@ -48,7 +53,8 @@ test("release bundle includes required scripts and explicit install strategy", (
   assert.match(uninstallScript, /manage-openclaw-config\.mjs"\s+uninstall/);
 
   const readme = readFileSync(resolve(repoRoot, "README.md"), "utf8");
-  assert.match(readme, /使用 `package-lock\.json` 显式执行 `npm ci --omit=dev`/);
+  assert.match(readme, /包含三个插件/);
+  assert.match(readme, /~\/\.openclaw\/rules\//);
   assert.match(readme, /这个仓库不是单一许可证仓库/);
 });
 
