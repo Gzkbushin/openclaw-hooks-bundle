@@ -1,10 +1,8 @@
 {
   "id": "openclaw-quality-hooks",
   "name": "OpenClaw Quality Hooks",
-  "version": "1.1.0",
-  "description": "ECC-style safety, formatting, reminder, and quality-gate hooks",
-  "author": "OpenClaw Hooks Bundle Contributors",
-  "license": "MIT",
+  "version": "2.0.0",
+  "description": "ECC-style safety, formatting, reminder, and quality-gate hooks (with hookify-engine integration)",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -45,10 +43,5 @@
         }
       }
     }
-  },
-  "hooks": [
-    "before_tool_call",
-    "after_tool_call"
-  ],
-  "tools": []
+  }
 }

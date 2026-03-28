@@ -1,3 +1,8 @@
+// DEPRECATED: Use hookify-engine rules instead.
+// This module is retained for backward compatibility — when hookify-engine is
+// not available, openclaw-quality-hooks falls back to this built-in auditor.
+// See plugins/hookify-engine/src/rules/warn-debug-code.md for the equivalent rule.
+
 import { readFileSync } from "node:fs";
 import { getFilePath, shortPath, type AfterToolEvent, type Logger } from "./shared.ts";
 

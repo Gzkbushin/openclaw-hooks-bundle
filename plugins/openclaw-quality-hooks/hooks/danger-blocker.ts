@@ -1,3 +1,8 @@
+// DEPRECATED: Use hookify-engine rules instead.
+// This module is retained for backward compatibility — when hookify-engine is
+// not available, openclaw-quality-hooks falls back to this built-in blocker.
+// See plugins/hookify-engine/src/rules/ for equivalent declarative rules.
+
 import { writeAuditEvent, type AuditLoggerConfig, type AuditEventType } from "./audit-logger.ts";
 import { getCommand, isExecLikeTool, type BeforeToolEvent, type BeforeToolResult, type Logger, type ToolContext } from "./shared.ts";
 
