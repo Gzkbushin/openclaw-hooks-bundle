@@ -9,30 +9,15 @@ import { runBeforeToolCall } from "./src/hooks/before-tool-call.ts";
 import { runAfterToolCall } from "./src/hooks/after-tool-call.ts";
 
 // ---------------------------------------------------------------------------
-// Graceful definePluginEntry import (SDK only available in OpenClaw runtime)
-// ---------------------------------------------------------------------------
-
-let definePluginEntry: <T>(def: T) => T;
-try {
-  const mod = await import("openclaw/plugin-sdk/plugin-entry");
-  definePluginEntry = (mod as { definePluginEntry: typeof definePluginEntry }).definePluginEntry;
-} catch {
-  // Standalone/testing fallback: identity wrapper
-  definePluginEntry = <T>(def: T) => def;
-}
-
-// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+type HookHandler = (event: unknown, ctx: unknown) => unknown;
 
 type PluginApi = {
   pluginConfig?: Record<string, unknown>;
   logger: Logger;
-  registerHook: (opts: {
-    event: string;
-    priority?: number;
-    handler: (event: any, ctx: any) => unknown;
-  }) => void;
+  on: (event: string, handler: HookHandler, options?: { priority?: number }) => void;
 };
 
 type PluginConfig = {
@@ -56,7 +41,7 @@ const pluginConfigSchema = {
 // Plugin definition
 // ---------------------------------------------------------------------------
 
-const pluginEntry = definePluginEntry({
+const plugin = {
   id: "hookify-engine",
   name: "Hookify Engine",
   version: "2.0.0",
@@ -98,37 +83,37 @@ const pluginEntry = definePluginEntry({
     };
 
     // 3. Register before_tool_call — priority 40 (runs before quality-hooks at 50)
-    api.registerHook({
-      event: "before_tool_call",
-      priority: 40,
-      handler: (event, ctx) => {
+    api.on(
+      "before_tool_call",
+      (event, ctx) => {
         return withSafeErrorHandling(
           "HookifyEngine/before_tool_call",
           () => runBeforeToolCall(event, api.logger, ctx ?? {}),
           api.logger
         );
       },
-    });
+      { priority: 40 }
+    );
 
     // 4. Register after_tool_call — priority 40
-    api.registerHook({
-      event: "after_tool_call",
-      priority: 40,
-      handler: (event, ctx) => {
+    api.on(
+      "after_tool_call",
+      (event, ctx) => {
         return withSafeErrorHandling(
           "HookifyEngine/after_tool_call",
           () => runAfterToolCall(event, api.logger, ctx ?? {}),
           api.logger
         );
       },
-    });
+      { priority: 40 }
+    );
 
     // 5. Log success
     api.logger.info?.(
       `hookify-engine v2.0.0 registered (rulesDir=${rulesDir})`
     );
   },
-});
+};
 
-export const plugin = pluginEntry;   // Named export for test compatibility
-export default pluginEntry;           // Default export for OpenClaw runtime
+export { plugin };
+export default plugin;

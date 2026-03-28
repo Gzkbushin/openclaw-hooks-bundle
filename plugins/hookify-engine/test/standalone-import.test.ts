@@ -23,11 +23,25 @@ test("hookify-engine imports as a standalone package without quality-hooks prese
     assert.equal(mod.default.id, "hookify-engine");
     assert.equal(mod.plugin, mod.default);
 
+    const globals = globalThis as typeof globalThis & {
+      __hookifyEngineConfig?: {
+        rulesDir?: string;
+        configFile?: string;
+        maxRegexCacheSize?: number;
+      };
+    };
+    delete globals.__hookifyEngineConfig;
+
     const hooks: RegisteredHook[] = [];
     mod.default.register({
+      pluginConfig: {
+        rulesDir: "/tmp/hookify-rules",
+        configFile: "rules.yaml",
+        maxRegexCacheSize: 99,
+      },
       logger: {},
-      registerHook(hook: RegisteredHook) {
-        hooks.push(hook);
+      on(event: string, handler: unknown, opts?: { priority?: number }) {
+        hooks.push({ event, priority: opts?.priority, handler: handler as RegisteredHook['handler'] });
       }
     });
 
@@ -40,6 +54,11 @@ test("hookify-engine imports as a standalone package without quality-hooks prese
         { event: "before_tool_call", priority: 40 }
       ]
     );
+    assert.deepEqual(globals.__hookifyEngineConfig, {
+      rulesDir: "/tmp/hookify-rules",
+      configFile: undefined,
+      maxRegexCacheSize: 99,
+    });
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }
