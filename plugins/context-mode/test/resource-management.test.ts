@@ -39,7 +39,7 @@ function registerPlugin(config: Record<string, unknown>) {
       error: (...args: unknown[]) => errorEntries.push(args),
       debug: (...args: unknown[]) => debugEntries.push(args),
     },
-    on(event, handler) {
+    registerHook({ event, handler }) {
       handlers.set(event, handler);
     },
   });

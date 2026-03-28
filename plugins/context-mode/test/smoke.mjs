@@ -15,7 +15,7 @@ assert(manifest.id === "context-mode", "manifest.id mismatch");
 assert(Array.isArray(manifest.hooks), "manifest.hooks missing");
 for (const hook of ["after_tool_call", "before_compaction", "session_start"]) {
   assert(manifest.hooks.includes(hook), `missing hook in manifest: ${hook}`);
-  assert(indexTs.includes(`api.on(\"${hook}\"`), `hook handler not registered: ${hook}`);
+  assert(indexTs.includes(`event: "${hook}"`), `hook handler not registered: ${hook}`);
 }
 
 assert(indexTs.includes("better-sqlite3"), "better-sqlite3 not used");

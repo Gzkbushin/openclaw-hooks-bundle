@@ -25,7 +25,11 @@ type Logger = {
 };
 
 type PluginApi = {
-  on: (event: string, handler: (payload?: unknown) => unknown, opts?: { priority?: number }) => void;
+  registerHook: (opts: {
+    event: string;
+    priority?: number;
+    handler: (payload?: unknown) => unknown;
+  }) => void;
   logger?: Logger;
 };
 
@@ -759,90 +763,99 @@ const pluginEntry = definePluginEntry({
     let currentSessionId = randomUUID();
     db.ensureSession(currentSessionId);
 
-    api.on("session_start", (payload?: unknown) => {
-      const sessionId = resolveSessionId(payload, currentSessionId);
-      currentSessionId = sessionId;
-      db.ensureSession(sessionId);
+    api.registerHook({
+      event: "session_start",
+      handler: (payload?: unknown) => {
+        const sessionId = resolveSessionId(payload, currentSessionId);
+        currentSessionId = sessionId;
+        db.ensureSession(sessionId);
 
-      const resume = db.getResume(sessionId);
-      if (!resume || resume.consumed === 1) {
-        return undefined;
-      }
+        const resume = db.getResume(sessionId);
+        if (!resume || resume.consumed === 1) {
+          return undefined;
+        }
 
-      db.markResumeConsumed(sessionId);
+        db.markResumeConsumed(sessionId);
 
-      const injected = [
-        "<context_mode_resume>",
-        resume.snapshot,
-        "</context_mode_resume>",
-      ].join("\n");
+        const injected = [
+          "<context_mode_resume>",
+          resume.snapshot,
+          "</context_mode_resume>",
+        ].join("\n");
 
-      log.debug?.("session restored", { sessionId, eventCount: resume.event_count });
+        log.debug?.("session restored", { sessionId, eventCount: resume.event_count });
 
-      return {
-        prependSystemContext: injected,
-        contextModeResume: resume.snapshot,
-      };
+        return {
+          prependSystemContext: injected,
+          contextModeResume: resume.snapshot,
+        };
+      },
     });
 
-    api.on("after_tool_call", (payload?: unknown) => {
-      if (!payload || typeof payload !== "object") return;
-      const event = payload as ToolCallEvent;
+    api.registerHook({
+      event: "after_tool_call",
+      handler: (payload?: unknown) => {
+        if (!payload || typeof payload !== "object") return;
+        const event = payload as ToolCallEvent;
 
-      const toolName = normalizeToolName(String(event.toolName || event.tool_name || event.name || "unknown"));
-      const params = (event.params || event.input || event.toolInput || event.arguments || {}) as AnyRecord;
-      const result = event.result ?? event.output ?? event.toolResponse;
+        const toolName = normalizeToolName(String(event.toolName || event.tool_name || event.name || "unknown"));
+        const params = (event.params || event.input || event.toolInput || event.arguments || {}) as AnyRecord;
+        const result = event.result ?? event.output ?? event.toolResponse;
 
-      const isError = detectError(event);
-      const priority = classifyPriority(toolName, isError);
-      const sid = resolveSessionId(event, currentSessionId);
-      const { summary, detail } = makeEventSummary(toolName, params, result, isError);
+        const isError = detectError(event);
+        const priority = classifyPriority(toolName, isError);
+        const sid = resolveSessionId(event, currentSessionId);
+        const { summary, detail } = makeEventSummary(toolName, params, result, isError);
 
-      db.insertToolEvent(sid, toolName, priority, summary, detail, isError);
+        db.insertToolEvent(sid, toolName, priority, summary, detail, isError);
 
-      if (!SANDBOX_TOOLS.has(toolName) && isLikelyExecutionTool(toolName)) {
-        const routeSummary = `routing_violation | tool=${toolName} should_use=ctx_execute/ctx_batch_execute`;
-        db.insertToolEvent(
+        if (!SANDBOX_TOOLS.has(toolName) && isLikelyExecutionTool(toolName)) {
+          const routeSummary = `routing_violation | tool=${toolName} should_use=ctx_execute/ctx_batch_execute`;
+          db.insertToolEvent(
+            sid,
+            "routing_violation",
+            1,
+            routeSummary,
+            JSON.stringify({ toolName, reason: "non-sandbox execution path" }),
+            false,
+          );
+        }
+
+        logResourceStats("after_tool_call", sid, db.cleanupResources(resourceLimits));
+
+        log.debug?.("captured tool event", {
           sid,
-          "routing_violation",
-          1,
-          routeSummary,
-          JSON.stringify({ toolName, reason: "non-sandbox execution path" }),
-          false,
-        );
-      }
-
-      logResourceStats("after_tool_call", sid, db.cleanupResources(resourceLimits));
-
-      log.debug?.("captured tool event", {
-        sid,
-        toolName,
-        priority,
-        isError,
-        durationMs: event.durationMs,
-      });
+          toolName,
+          priority,
+          isError,
+          durationMs: event.durationMs,
+        });
+      },
     });
 
-    api.on("before_compaction", (payload?: unknown) => {
-      const sid = resolveSessionId(payload, currentSessionId);
-      const events = db.getRecentEvents(sid, 120);
-      if (events.length === 0) return undefined;
+    api.registerHook({
+      event: "before_compaction",
+      handler: (payload?: unknown) => {
+        const sid = resolveSessionId(payload, currentSessionId);
+        const events = db.getRecentEvents(sid, 120);
+        if (events.length === 0) return undefined;
 
-      const searchQuery = deriveSearchQueryFromRecent(events);
-      const related = searchQuery ? db.searchSession(sid, searchQuery, 6) : [];
-      const snapshot = buildSnapshot(events, related, 2048);
-      db.upsertResume(sid, snapshot);
-      logResourceStats("before_compaction", sid, db.cleanupResources(resourceLimits));
+        const searchQuery = deriveSearchQueryFromRecent(events);
+        const related = searchQuery ? db.searchSession(sid, searchQuery, 6) : [];
+        const snapshot = buildSnapshot(events, related, 2048);
+        db.upsertResume(sid, snapshot);
+        logResourceStats("before_compaction", sid, db.cleanupResources(resourceLimits));
 
-      log.debug?.("snapshot built", {
-        sid,
-        eventCount: events.length,
-        bytes: Buffer.byteLength(snapshot, "utf8"),
-      });
+        log.debug?.("snapshot built", {
+          sid,
+          eventCount: events.length,
+          bytes: Buffer.byteLength(snapshot, "utf8"),
+        });
 
-      return {
-        contextModeSnapshot: snapshot,
-      };
+        return {
+          contextModeSnapshot: snapshot,
+        };
+      },
     });
 
     log.info?.("registered hooks", {
