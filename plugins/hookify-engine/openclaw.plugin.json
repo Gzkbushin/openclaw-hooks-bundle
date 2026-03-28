@@ -1,0 +1,27 @@
+{
+  "id": "hookify-engine",
+  "name": "Hookify Engine",
+  "version": "2.0.0",
+  "description": "Declarative markdown-based rule engine for OpenClaw hooks",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "rulesDir": {
+        "type": "string",
+        "default": "~/.openclaw/rules"
+      },
+      "configFile": {
+        "type": "string"
+      },
+      "maxRegexCacheSize": {
+        "type": "integer",
+        "default": 256
+      }
+    }
+  }
+}

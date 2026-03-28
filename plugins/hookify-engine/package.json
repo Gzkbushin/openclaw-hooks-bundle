@@ -1,0 +1,17 @@
+{
+  "name": "hookify-engine",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Declarative markdown rule engine for OpenClaw hooks",
+  "main": "./index.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "lint": "node --experimental-strip-types scripts/lint.ts"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
