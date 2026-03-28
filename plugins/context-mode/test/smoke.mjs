@@ -12,9 +12,10 @@ function assert(condition, message) {
 }
 
 assert(manifest.id === "context-mode", "manifest.id mismatch");
-assert(Array.isArray(manifest.hooks), "manifest.hooks missing");
+for (const field of ["author", "license", "homepage", "capabilities", "hooks", "tools"]) {
+  assert(!(field in manifest), `manifest should not include ${field}`);
+}
 for (const hook of ["after_tool_call", "before_compaction", "session_start"]) {
-  assert(manifest.hooks.includes(hook), `missing hook in manifest: ${hook}`);
   assert(indexTs.includes(`event: "${hook}"`), `hook handler not registered: ${hook}`);
 }
 
