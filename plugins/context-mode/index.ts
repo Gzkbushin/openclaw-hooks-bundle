@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { resolvePluginConfig, type ResourceLimitsConfig } from "../openclaw-quality-hooks/hooks/shared.ts";
+import { resolvePluginConfig, type ResourceLimitsConfig } from "./config-loader.ts";
 import { redactSensitiveData } from "./sensitive-data-filter.ts";
 
 let definePluginEntry: <T>(def: T) => T;
