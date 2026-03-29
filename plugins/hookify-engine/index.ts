@@ -83,11 +83,12 @@ const plugin = {
 
     // Expose runtime hook functions for cross-plugin integration.
     // quality-hooks reads __hookifyEngineHooks to delegate rule evaluation.
+    // Signature: (event, logger, ctx) — matches runBeforeToolCall/runAfterToolCall
     (globalThis as Record<string, unknown>).__hookifyEngineHooks = {
-      runBeforeToolCall: (event: unknown, ctx: unknown) =>
-        runBeforeToolCall(event, api.logger, ctx ?? {}),
-      runAfterToolCall: (event: unknown, ctx: unknown) =>
-        runAfterToolCall(event, api.logger, ctx ?? {}),
+      runBeforeToolCall: (event: unknown, logger: unknown, ctx: unknown) =>
+        runBeforeToolCall(event, logger as Logger, ctx ?? {}),
+      runAfterToolCall: (event: unknown, logger: unknown, ctx: unknown) =>
+        runAfterToolCall(event, logger as Logger, ctx ?? {}),
     };
 
     // 3. Register before_tool_call — priority 40 (runs before quality-hooks at 50)

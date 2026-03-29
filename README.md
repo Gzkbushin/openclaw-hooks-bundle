@@ -23,7 +23,7 @@ OpenClaw Hooks Bundle v1.0.0 包含三个插件：
 
 - ✅ 新增 **hookify-engine** — 用 Markdown + YAML frontmatter 声明规则，无需写代码
 - 🔄 **openclaw-quality-hooks** 现在委托 hookify-engine 进行规则评估
-- 🛡️ 内置 10 条默认规则，覆盖危险命令、调试代码、敏感文件等场景
+- 🛡️ 内置 11 条默认规则，覆盖危险命令、调试代码、敏感文件等场景
 - 📁 规则热加载 — 修改规则文件即刻生效，无需重启
 - 🔄 向后兼容 — hookify-engine 不可用时自动回退到内置钩子
 
@@ -129,6 +129,7 @@ Operation blocked unless `approved: true` is provided.
 | `warn-sensitive-files.md` | before | warn | 700 | 警告编辑 .env、密钥等敏感文件 |
 | `warn-typed-credentials.md` | before | warn | 600 | 警告 TypeScript 中硬编码凭证 |
 | `warn-hardcoded-secrets.md` | after | warn | 600 | 警告写入硬编码密钥/token |
+| `warn-no-gitignore.md` | after | warn | 180 | 警告创建敏感文件但未加入 .gitignore |
 | `warn-debug-code.md` | after | warn | 100 | 警告 console.log / debugger |
 | `remind-long-commands.md` | before | warn | 50 | 提醒可能长时间运行的命令 |
 | `check-git-push.md` | before | warn | 100 | git push 前检查提醒 |
@@ -340,8 +341,7 @@ enabled: false    # ← 改为 false
 hookifyEngine:
   enabled: true
   rulesDir: ~/.openclaw/rules
-  cacheSize: 256
-  watchInterval: 3000
+  maxRegexCacheSize: 256
 
 qualityHooks:
   enabled: true
