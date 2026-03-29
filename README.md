@@ -493,6 +493,14 @@ cat ~/.openclaw/logs/openclaw-quality-hooks/audit.log.jsonl
 
 ---
 
+## 致谢
+
+hookify-engine 的设计灵感来源于 [Anthropic Claude Code 官方 hookify 插件](https://github.com/anthropics/claude-code/tree/main/plugins/hookify)。Claude Code 的 hookify 插件首创了「用 Markdown + YAML frontmatter 声明式定义 AI 编程助手 Hook 规则」的范式，包括规则文件格式、条件运算符、动作类型（warn/block）等核心概念。本项目在此设计基础上进行了重新实现并适配 OpenClaw 插件体系，新增了规则热加载、FTS5 检索、优先级队列、资源管理等能力。
+
+感谢 [Anthropic](https://github.com/anthropics) 开源 Claude Code 生态。
+
+---
+
 ## 许可证
 
 这个仓库不是单一许可证仓库：
