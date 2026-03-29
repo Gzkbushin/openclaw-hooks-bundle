@@ -1,19 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { resolvePluginConfig, type ResourceLimitsConfig } from "./config-loader.ts";
+import { loadBetterSqlite3 } from "./db-helper.ts";
 import { redactSensitiveData } from "./sensitive-data-filter.ts";
-
-let definePluginEntry: <T>(def: T) => T;
-try {
-  const mod = await import("openclaw/plugin-sdk/plugin-entry");
-  definePluginEntry = (mod as { definePluginEntry: typeof definePluginEntry }).definePluginEntry;
-} catch {
-  definePluginEntry = <T>(def: T) => def;
-}
 
 type AnyRecord = Record<string, unknown>;
 
@@ -25,11 +17,7 @@ type Logger = {
 };
 
 type PluginApi = {
-  registerHook: (opts: {
-    event: string;
-    priority?: number;
-    handler: (payload?: unknown) => unknown;
-  }) => void;
+  on: (event: string, handler: (payload?: unknown, ctx?: unknown) => unknown, options?: { priority?: number }) => void;
   logger?: Logger;
 };
 
@@ -312,8 +300,7 @@ class ContextModeDB {
   private searchStmt;
 
   constructor(dbPath: string) {
-    const require = createRequire(import.meta.url);
-    const BetterSqlite3 = require("better-sqlite3") as new (path: string, opts?: AnyRecord) => DB;
+    const BetterSqlite3 = loadBetterSqlite3() as new (path: string, opts?: AnyRecord) => DB;
     this.db = new BetterSqlite3(dbPath, { timeout: 5000 });
 
     this.db.pragma("journal_mode = WAL");
@@ -693,7 +680,7 @@ const configSchema = {
   },
 } as const;
 
-const pluginEntry = definePluginEntry({
+const plugin = {
   id: "context-mode",
   name: "Context Mode",
   version: "1.1.0",
@@ -763,9 +750,9 @@ const pluginEntry = definePluginEntry({
     let currentSessionId = randomUUID();
     db.ensureSession(currentSessionId);
 
-    api.registerHook({
-      event: "session_start",
-      handler: (payload?: unknown) => {
+    api.on(
+      "session_start",
+      (payload?: unknown) => {
         const sessionId = resolveSessionId(payload, currentSessionId);
         currentSessionId = sessionId;
         db.ensureSession(sessionId);
@@ -790,11 +777,12 @@ const pluginEntry = definePluginEntry({
           contextModeResume: resume.snapshot,
         };
       },
-    });
+      { priority: 50 },
+    );
 
-    api.registerHook({
-      event: "after_tool_call",
-      handler: (payload?: unknown) => {
+    api.on(
+      "after_tool_call",
+      (payload?: unknown) => {
         if (!payload || typeof payload !== "object") return;
         const event = payload as ToolCallEvent;
 
@@ -831,11 +819,12 @@ const pluginEntry = definePluginEntry({
           durationMs: event.durationMs,
         });
       },
-    });
+      { priority: 50 },
+    );
 
-    api.registerHook({
-      event: "before_compaction",
-      handler: (payload?: unknown) => {
+    api.on(
+      "before_compaction",
+      (payload?: unknown) => {
         const sid = resolveSessionId(payload, currentSessionId);
         const events = db.getRecentEvents(sid, 120);
         if (events.length === 0) return undefined;
@@ -856,7 +845,8 @@ const pluginEntry = definePluginEntry({
           contextModeSnapshot: snapshot,
         };
       },
-    });
+      { priority: 50 },
+    );
 
     log.info?.("registered hooks", {
       hooks: ["session_start", "after_tool_call", "before_compaction"],
@@ -864,7 +854,7 @@ const pluginEntry = definePluginEntry({
       resourceLimits,
     });
   },
-});
+};
 
-export const plugin = pluginEntry;
-export default pluginEntry;
+export { plugin };
+export default plugin;
