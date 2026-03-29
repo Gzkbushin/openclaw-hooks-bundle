@@ -75,11 +75,22 @@ function parseYamlScalar(raw: string): string | boolean | number {
     return Number(trimmed);
   }
 
-  // Quoted string — strip surrounding quotes
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
+  // Quoted string — strip surrounding quotes and process YAML escape sequences
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    // Double-quoted: process YAML escape sequences
+    // NOTE: We only unescape actual YAML sequences (\\, \n, \t, \r)
+    // and leave regex metacharacters (\b, \s, \d, \w, etc.) as-is
+    // since pattern values are typically used as regex patterns.
+    return trimmed
+      .slice(1, -1)
+      .replace(/\\\\/g, "\x00BACKSLASH\x00")
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t")
+      .replace(/\\r/g, "\r")
+      .replace(/\x00BACKSLASH\x00/g, "\\");
+  }
+  if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+    // Single-quoted: no escape processing (YAML spec)
     return trimmed.slice(1, -1);
   }
 

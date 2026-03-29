@@ -11,7 +11,7 @@ conditions:
     pattern: "exec|bash|terminal"
   - field: command
     operator: regex_match
-    pattern: "\\b--no-verify\\b"
+    pattern: "--no-verify"
 ---
 
 🛑 **Git hook bypass blocked!**

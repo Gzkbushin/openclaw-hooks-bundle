@@ -11,7 +11,7 @@ conditions:
     pattern: "exec|bash|terminal"
   - field: command
     operator: regex_match
-    pattern: "\\b(dd\\s+if=|mkfs\\.|format\\s|chmod\\s+777)\\b"
+    pattern: "dd\\s+if=|mkfs\\.|\\bformat\\s|chmod\\s+777"
 ---
 
 🛑 **Destructive operation detected!**
