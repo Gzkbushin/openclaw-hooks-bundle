@@ -32,7 +32,7 @@ test("plugin normalizes namespaced exec tool names before safety checks", () => 
 
   plugin.register({
     logger: {},
-    registerHook({ event, handler }) {
+    on(event, handler) {
       if (event === "before_tool_call") {
         beforeToolCall = handler;
       }
@@ -248,8 +248,8 @@ test("plugin registers before_tool_call and after_tool_call handlers with priori
     logger: {
       info: (...args: unknown[]) => infoLogs.push(args.join(" "))
     },
-    registerHook({ event, priority }) {
-      hooks.push({ event, priority });
+    on(event, _handler, opts) {
+      hooks.push({ event, priority: opts?.priority });
     }
   });
   assert.deepEqual(
@@ -271,7 +271,7 @@ test("plugin loads config from file and inline config wins", () => {
   plugin.register({
     pluginConfig: { configFile },
     logger: {},
-    registerHook({ event }) {
+    on(event) {
       disabledHooks.push(event);
     }
   });
@@ -281,7 +281,7 @@ test("plugin loads config from file and inline config wins", () => {
   plugin.register({
     pluginConfig: { configFile, enabled: true },
     logger: {},
-    registerHook({ event }) {
+    on(event) {
       enabledHooks.push(event);
     }
   });

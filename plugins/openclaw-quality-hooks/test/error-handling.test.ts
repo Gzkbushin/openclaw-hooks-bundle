@@ -25,7 +25,7 @@ function registerHandlers(logDir: string, logger: Record<string, (...args: unkno
   plugin.register({
     pluginConfig: { logDir },
     logger,
-    registerHook({ event, handler }) {
+    on(event, handler) {
       handlers.set(event, handler);
     }
   });

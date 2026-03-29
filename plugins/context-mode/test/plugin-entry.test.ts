@@ -29,8 +29,8 @@ test("context-mode registers expected hooks through registerHook", () => {
   try {
     defaultPlugin.register({
       logger: {},
-      registerHook(registration) {
-        registrations.push(registration);
+      on(event, handler, opts) {
+        registrations.push({ event, handler, priority: opts?.priority });
       },
     });
 
