@@ -25,7 +25,7 @@ export function runAfterToolCall(
     return;
   }
 
-  const result = evaluateRules(input, rules);
+  const result = evaluateRules(rules, input);
 
   // Informational log entries
   if (result.logs && result.logs.length > 0) {

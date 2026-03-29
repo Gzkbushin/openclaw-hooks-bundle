@@ -29,7 +29,7 @@ export function runBeforeToolCall(
     return undefined;
   }
 
-  const result = evaluateRules(input, rules);
+  const result = evaluateRules(rules, input);
 
   // Warnings — advisory, never block
   if (result.warnings && result.warnings.length > 0) {
