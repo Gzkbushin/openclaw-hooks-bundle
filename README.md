@@ -135,11 +135,12 @@ Operation blocked unless `approved: true` is provided.
 
 #### 热加载
 
-hookify-engine 自动检测 `~/.openclaw/rules/` 目录下的文件变更：
-- 新增 `.md` 文件 → 自动加载
-- 修改已有文件 → 重新解析并替换
-- 删除文件 → 自动移除
-- 无需重启 OpenClaw
+hookify-engine 使用基于文件修改时间（mtime）的 lazy 缓存策略：
+- 每次触发 hook 时，自动检测规则文件是否有变更
+- 新增 `.md` 文件 → 下次触发时自动加载
+- 修改已有文件 → 下次触发时重新解析并替换
+- 删除文件 → 下次触发时自动移除
+- **无需重启 OpenClaw**，规则保存后即刻生效
 
 #### 配置选项
 
@@ -147,16 +148,14 @@ hookify-engine 自动检测 `~/.openclaw/rules/` 目录下的文件变更：
 hookifyEngine:
   enabled: true
   rulesDir: ~/.openclaw/rules
-  cacheSize: 256
-  watchInterval: 3000
+  maxRegexCacheSize: 256
 ```
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `enabled` | boolean | `true` | 是否启用规则引擎 |
 | `rulesDir` | string | `~/.openclaw/rules` | 规则文件目录 |
-| `cacheSize` | integer | `256` | LRU 正则缓存条目数 |
-| `watchInterval` | integer | `3000` | 热加载检测间隔（毫秒） |
+| `maxRegexCacheSize` | integer | `256` | LRU 正则缓存条目数 |
 
 ---
 

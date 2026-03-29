@@ -72,14 +72,22 @@ const plugin = {
 
     const rulesDir = expandHome(config.rulesDir ?? "~/.openclaw/rules");
 
-    // Expose resolved config for rule-loader / rule-engine via env or
-    // a lightweight module-level setter so downstream modules can pick it
-    // up without circular imports.  We keep this simple — store on
-    // `globalThis` under a namespaced key.
+    // Expose resolved config and runtime hook functions on globalThis so
+    // that other plugins (e.g. openclaw-quality-hooks) can consume them
+    // without cross-plugin imports.
     (globalThis as Record<string, unknown>).__hookifyEngineConfig = {
       rulesDir,
       configFile: config.configFile,
       maxRegexCacheSize: config.maxRegexCacheSize ?? 256,
+    };
+
+    // Expose runtime hook functions for cross-plugin integration.
+    // quality-hooks reads __hookifyEngineHooks to delegate rule evaluation.
+    (globalThis as Record<string, unknown>).__hookifyEngineHooks = {
+      runBeforeToolCall: (event: unknown, ctx: unknown) =>
+        runBeforeToolCall(event, api.logger, ctx ?? {}),
+      runAfterToolCall: (event: unknown, ctx: unknown) =>
+        runAfterToolCall(event, api.logger, ctx ?? {}),
     };
 
     // 3. Register before_tool_call — priority 40 (runs before quality-hooks at 50)
@@ -110,7 +118,7 @@ const plugin = {
 
     // 5. Log success
     api.logger.info?.(
-      `hookify-engine v2.0.0 registered (rulesDir=${rulesDir})`
+      `hookify-engine v1.0.0 registered (rulesDir=${rulesDir})`
     );
   },
 };
