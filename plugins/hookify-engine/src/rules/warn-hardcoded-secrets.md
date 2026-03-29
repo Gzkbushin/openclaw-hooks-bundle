@@ -8,13 +8,13 @@ action: warn
 conditions:
   - field: tool_name
     operator: regex_match
-    pattern: "edit|write"
+    pattern: 'edit|write'
   - field: file_path
     operator: ends_with
-    pattern: ".ts"
+    pattern: '.ts'
   - field: new_text
     operator: regex_match
-    pattern: "(API_KEY|SECRET|TOKEN|PASSWORD)\\s*=\\s*[\\'\"]"
+    pattern: '(api_?key|secret|token|password|passwd|pwd|credential)\s*=\s*'
 ---
 
 🔐 **Hardcoded credential detected in TypeScript!**
@@ -23,7 +23,7 @@ Sensitive values should never be hardcoded in source files.
 Use environment variables or a secrets manager instead.
 
 **Detected pattern:**
-Assignments like `API_KEY = '...'`, `SECRET = "..."`, `TOKEN = '...'`, or `PASSWORD = "..."`
+Assignments like `API_KEY = '...'`, `api_key = "..."`, `SECRET = '...'`, `PASSWORD = "..."`, `pwd = "..."`
 
 **Secure alternatives:**
 - Use `process.env.API_KEY` (Node.js)
