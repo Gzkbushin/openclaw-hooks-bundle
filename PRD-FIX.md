@@ -23,11 +23,11 @@ Commit: `ab95cac fix(hookify-engine): export plain plugin entry`.
 - [x] Fix plugins/context-mode/package.json: change `name` from `"context-mode-openclaw"` to `"context-mode"`
 - [x] Clean all 3 `openclaw.plugin.json` manifest files: keep only `id`, `name`, `description`, `version`, `configSchema`; remove `hooks`, `tools`, `author`, `license`, `homepage`, `capabilities`
 - [x] Fix all test mocks in `plugins/openclaw-quality-hooks/test/hooks.test.ts`, `error-handling.test.ts`, `plugins/context-mode/test/plugin-entry.test.ts`, `resource-management.test.ts`: change `registerHook({event,handler})` to `on(event, handler, opts)` or `registerHook(event, handler, opts)`
-- [ ] Run all tests: `node --experimental-strip-types --test plugins/hookify-engine/test/*.test.ts plugins/openclaw-quality-hooks/test/*.test.ts plugins/context-mode/test/*.test.ts` — target 125 tests
-- [ ] Verify: `grep -rn "^await " plugins/*/index.ts` should return nothing
-- [ ] Verify: `grep -rn "createRequire" plugins/*/index.ts` should return nothing
-- [ ] Verify: `grep -rn "definePluginEntry" plugins/*/index.ts` should return nothing
-- [ ] Verify: `grep -rn "registerHook({" plugins/*/index.ts` should return nothing
+- [x] Run all tests: `node --experimental-strip-types --test plugins/hookify-engine/test/*.test.ts plugins/openclaw-quality-hooks/test/*.test.ts plugins/context-mode/test/*.test.ts` — target 125 tests
+- [x] Verify: `grep -rn "^await " plugins/*/index.ts` should return nothing
+- [x] Verify: `grep -rn "createRequire" plugins/*/index.ts` should return nothing
+- [x] Verify: `grep -rn "definePluginEntry" plugins/*/index.ts` should return nothing
+- [x] Verify: `grep -rn "registerHook({" plugins/*/index.ts` should return nothing
 - [ ] Copy fixed files to /root/.openclaw/extensions/ counterparts
 
 ## Critical constraints
