@@ -683,7 +683,7 @@ const configSchema = {
 const plugin = {
   id: "context-mode",
   name: "Context Mode",
-  version: "1.1.0",
+  version: "1.0.0",
   description: "Privacy-first context optimization for OpenClaw",
   configSchema,
 

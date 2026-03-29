@@ -2,7 +2,7 @@
   "id": "openclaw-quality-hooks",
   "name": "OpenClaw Quality Hooks",
   "description": "ECC-style safety, formatting, reminder, and quality-gate hooks (with hookify-engine integration)",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

@@ -1,6 +1,6 @@
 {
   "name": "openclaw-hooks-bundle",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "一套高质量的 OpenClaw Hooks，含声明式规则引擎、代码质量、安全性和上下文管理",
   "main": "README.md",
   "scripts": {

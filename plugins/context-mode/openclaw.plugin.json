@@ -2,7 +2,7 @@
   "id": "context-mode",
   "name": "Context Mode",
   "description": "Privacy-first context optimization for OpenClaw",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "configSchema": {
     "type": "object",
     "properties": {

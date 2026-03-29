@@ -30,8 +30,8 @@ test("openclaw-quality-hooks imports as a standalone package without hookify-eng
       logger: {
         info: (...args: unknown[]) => infoLogs.push(args.join(" "))
       },
-      registerHook(hook: RegisteredHook) {
-        hooks.push(hook);
+      on(event: string, handler: unknown, opts?: { priority?: number }) {
+        hooks.push({ event, priority: opts?.priority, handler: handler as RegisteredHook['handler'] });
       }
     });
 

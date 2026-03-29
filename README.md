@@ -1,8 +1,8 @@
-# OpenClaw Hooks Bundle v2.0.0
+# OpenClaw Hooks Bundle v1.0.0
 
 [![License: Mixed](https://img.shields.io/badge/license-mixed-lightgrey.svg)](#许可证)
 [![GitHub Stars](https://img.shields.io/github/stars/Gzkbushin/openclaw-hooks-bundle?style=social)](https://github.com/Gzkbushin/openclaw-hooks-bundle)
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](CHANGELOG.md)
 [![Plugins](https://img.shields.io/badge/plugins-3-green.svg)](#概述)
 
 高质量的 OpenClaw 插件集合，含声明式规则引擎、代码安全审计、上下文快照与开发体验增强。
@@ -11,7 +11,7 @@
 
 ## 概述 Overview
 
-OpenClaw Hooks Bundle v2.0.0 包含三个插件：
+OpenClaw Hooks Bundle v1.0.0 包含三个插件：
 
 | 插件 | 功能 | 生命周期钩子 |
 |------|------|-------------|
@@ -19,7 +19,7 @@ OpenClaw Hooks Bundle v2.0.0 包含三个插件：
 | **openclaw-quality-hooks** | 安全阻断、审计、提醒、格式化、质量检查 | `before_tool_call`, `after_tool_call` |
 | **context-mode** | SQLite 持久化、上下文快照、FTS5 检索、敏感信息脱敏 | `session_start`, `after_tool_call`, `before_compaction` |
 
-### v2.0.0 核心变化
+### v1.0.0 核心变化
 
 - ✅ 新增 **hookify-engine** — 用 Markdown + YAML frontmatter 声明规则，无需写代码
 - 🔄 **openclaw-quality-hooks** 现在委托 hookify-engine 进行规则评估
@@ -162,7 +162,7 @@ hookifyEngine:
 
 ### 2. openclaw-quality-hooks — 质量与安全钩子
 
-v2.0.0 中，openclaw-quality-hooks 已与 hookify-engine 集成：
+v1.0.0 中，openclaw-quality-hooks 已与 hookify-engine 集成：
 
 - **规则评估** 委托给 hookify-engine（danger-blocker、console-log-audit 的逻辑已转化为声明式规则）
 - **工具驱动功能** 保持不变：auto-formatter、quality-gate、smart-reminder
@@ -196,7 +196,7 @@ qualityHooks:
 
 ### 3. context-mode — 上下文快照与检索
 
-context-mode 提供持久化上下文管理（v2.0.0 无变化）。
+context-mode 提供持久化上下文管理（v1.0.0 无变化）。
 
 #### 功能
 
@@ -368,7 +368,7 @@ contextMode:
 ```text
 openclaw-hooks-bundle/
 ├── plugins/
-│   ├── hookify-engine/              # 声明式规则引擎 (NEW in v2.0.0)
+│   ├── hookify-engine/              # 声明式规则引擎 (NEW in v1.0.0)
 │   │   ├── src/
 │   │   │   ├── types.ts             # 类型定义
 │   │   │   ├── rule-loader.ts       # Markdown 规则加载器

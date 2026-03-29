@@ -14,6 +14,7 @@ test("context-mode imports as a standalone package without quality-hooks present
   copyFileSync(join(sourceRoot, "index.ts"), join(tempPluginDir, "index.ts"));
   copyFileSync(join(sourceRoot, "config-loader.ts"), join(tempPluginDir, "config-loader.ts"));
   copyFileSync(join(sourceRoot, "sensitive-data-filter.ts"), join(tempPluginDir, "sensitive-data-filter.ts"));
+  copyFileSync(join(sourceRoot, "db-helper.ts"), join(tempPluginDir, "db-helper.ts"));
   copyFileSync(join(sourceRoot, "openclaw.config.json"), join(tempPluginDir, "openclaw.config.json"));
 
   try {

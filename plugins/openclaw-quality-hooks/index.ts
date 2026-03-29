@@ -60,7 +60,7 @@ const pluginConfigSchema = {
 const plugin = {
   id: "openclaw-quality-hooks",
   name: "OpenClaw Quality Hooks",
-  version: "2.0.0",
+  version: "1.0.0",
   description: "ECC-style safety, reminders, formatting, and quality-gate hooks (with hookify-engine integration)",
   register(api: PluginApi) {
     const config = resolvePluginConfig(

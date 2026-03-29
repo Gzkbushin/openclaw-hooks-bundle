@@ -26,7 +26,7 @@ function registerPlugin(dbPath: string) {
       error: () => {},
       debug: () => {},
     },
-    registerHook({ event, handler }) {
+    on(event, handler) {
       handlers.set(event, handler);
     },
   });

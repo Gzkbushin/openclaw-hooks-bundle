@@ -44,7 +44,7 @@ const pluginConfigSchema = {
 const plugin = {
   id: "hookify-engine",
   name: "Hookify Engine",
-  version: "2.0.0",
+  version: "1.0.0",
   description:
     "Declarative markdown-based rule engine for OpenClaw — ported from Claude Code hookify",
 
